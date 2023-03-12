@@ -42,7 +42,8 @@ def startRecording():
         numpydata = np.frombuffer(data, dtype=np.int16)
         frames.append(numpydata)
 
-    plt.plot(frames)
+    numpyarrayfinal = np.hstack(frames)
+    plt.plot(numpyarrayfinal)
     plt.show()
 
     stream.stop_stream()
