@@ -1,3 +1,4 @@
+import os
 import pyaudio
 import wave
 import numpy as np
@@ -9,7 +10,9 @@ from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
 from matplotlib.backend_bases import key_press_handler
 from matplotlib.figure import Figure
+from zipfile import ZipFile
 from scipy.io.wavfile import write
+from os import remove
 
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
@@ -145,3 +148,17 @@ open_audio_button.pack(
 )
 window.geometry("700x1200")
 window.mainloop()
+
+#---ARCHIVOS_ATM-----
+
+def to_atm(chunksList, wavFilePath):
+    file = open("chunks.s", "w+")
+    content = str(chunksList)
+    file.write(content)
+    with ZipFile('file.atm', 'w') as zip:
+         zip.write('chunks.s')
+         zip.write(wavFilePath)
+    try:
+        os.remove("chunks.s")
+    except:
+        print("File already deleted")
