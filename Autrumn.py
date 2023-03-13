@@ -5,18 +5,24 @@ from matplotlib import pyplot as plt
 import tkinter as tk
 from tkinter import ttk
 import threading
+from matplotlib.backends.backend_tkagg import (
+    FigureCanvasTkAgg, NavigationToolbar2Tk)
+from matplotlib.backend_bases import key_press_handler
+from matplotlib.figure import Figure
 from scipy.io.wavfile import write
 
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
 CHANNELS = 2
 RATE = 44100
-RECORD_SECONDS = 5
+RECORD_SECONDS = 2
 WAVE_OUTPUT_FILENAME = "output.wav"
 
 p = pyaudio.PyAudio()
 frames = []
 recording = False
+
+
 
 def recordingAudio():
     global recording
@@ -35,16 +41,23 @@ def startRecording():
 
     print("* recording")
 
+    global frames
     frames = []
     recording = True
+    i = 0
     while(recording):
+
         data = stream.read(CHUNK)
         numpydata = np.frombuffer(data, dtype=np.int16)
         frames.append(numpydata)
+        if(i>=int(RATE / CHUNK * RECORD_SECONDS)):
+            updatetimecanvas(np.hstack(frames))
+            i=0
+
+        i+=1
 
     numpyarrayfinal = np.hstack(frames)
-    plt.plot(numpyarrayfinal)
-    plt.show()
+    updatetimecanvas(numpyarrayfinal)
 
     stream.stop_stream()
     stream.close()
@@ -57,6 +70,10 @@ def startRecording():
     wf.writeframes(b''.join(frames))
     wf.close()
 
+
+
+
+
 def start_recording_thread():
     x = threading.Thread(target=startRecording)
     x.start()
@@ -66,6 +83,33 @@ window.title("Autrumn")
 
 
 
+fig = Figure(figsize=(5, 3), dpi=100)
+fig.add_subplot(111).plot(frames)
+fig2 = Figure(figsize=(5, 3), dpi=100)
+fig2.add_subplot(111).plot()
+
+frame1 = tk.Frame(window)
+frame2 = tk.Frame(window)
+
+canvas = FigureCanvasTkAgg(fig, window)
+toolbar = NavigationToolbar2Tk(canvas, frame1)
+canvas2 = FigureCanvasTkAgg(fig2, window)
+toolbar2 = NavigationToolbar2Tk(canvas2, frame2)
+
+
+def updatetimecanvas(timeframe):
+
+
+    fig.clear()
+    fig.add_subplot(111).plot(timeframe)  # generate random x/y
+    canvas.draw_idle()
+
+
+
+frame1.pack(side=tk.TOP, fill=tk.X)
+canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.X)
+frame2.pack(side=tk.TOP, fill=tk.X)
+canvas2.get_tk_widget().pack(side=tk.TOP, fill=tk.X)
 
 start_recording_button = ttk.Button(
     window,
@@ -99,5 +143,5 @@ open_audio_button = ttk.Button(
 open_audio_button.pack(
     expand=True
 )
-window.geometry("700x350")
+window.geometry("700x1200")
 window.mainloop()
