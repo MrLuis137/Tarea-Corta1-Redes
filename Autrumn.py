@@ -1,3 +1,4 @@
+import os
 import pyaudio
 import wave
 import numpy as np
@@ -5,7 +6,9 @@ from matplotlib import pyplot as plt
 import tkinter as tk
 from tkinter import ttk
 import threading
+from zipfile import ZipFile
 from scipy.io.wavfile import write
+from os import remove
 
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
@@ -101,3 +104,17 @@ open_audio_button.pack(
 )
 window.geometry("700x350")
 window.mainloop()
+
+#---ARCHIVOS_ATM-----
+
+def to_atm(chunksList, wavFilePath):
+    file = open("chunks.s", "w+")
+    content = str(chunksList)
+    file.write(content)
+    with ZipFile('file.atm', 'w') as zip:
+         zip.write('chunks.s')
+         zip.write(wavFilePath)
+    try:
+        os.remove("chunks.s")
+    except:
+        print("File already deleted")
