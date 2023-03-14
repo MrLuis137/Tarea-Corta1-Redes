@@ -47,22 +47,22 @@ def from_atm(filepath):
         files = zip.namelist();
         for i in range(0,len(files)):
             if(files[i] == WAVE_OUTPUT_FILENAME):
-                #no necesariamente la mejor manera de cargar el wav.
-                zip.read(files[i])
+                open_wav_file(zip.read(files[i]))
             elif(files[i] == WAVE_OUTPUT_FILENAME):
                 frames = zip.read(files[i]);
             
             print(zip.read(files[i]))
 
+#---ARCHIVOS_ATM-----
+
+def open_wav_file(file):
+    #en progreso
+    wf = wave.open(file, 'rb')
 
 def recordingAudio():
     global recording
     recording = False
     
-
-
-
-
 def startRecording():
     global recording
     stream = p.open(format=FORMAT,
