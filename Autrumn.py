@@ -16,7 +16,7 @@ from os import remove
 
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
-CHANNELS = 2
+CHANNELS = 1
 RATE = 44100
 RECORD_SECONDS = 2
 WAVE_OUTPUT_FILENAME = "output.wav"
@@ -27,9 +27,38 @@ recording = False
 
 
 
+#---ARCHIVOS_ATM-----
+
+def to_atm(chunksList, wavFilePath):
+    file = open("chunks", "w+")
+    content = str(chunksList)
+    file.write(content)
+    file.close
+    with ZipFile('file.atm', 'w') as zip:
+         zip.write('chunks')
+         zip.write(wavFilePath)
+    try:
+        os.remove("./chunks")
+    except:
+        print("File already deleted")
+
+def from_atm(filepath):
+    with ZipFile(filepath, 'w') as zip:
+        files = zip.namelist();
+        for i in range(0,len(files)):
+            if(files[i] == WAVE_OUTPUT_FILENAME):
+                #no necesariamente la mejor manera de cargar el wav.
+                zip.read(files[i])
+            elif(files[i] == WAVE_OUTPUT_FILENAME):
+                frames = zip.read(files[i]);
+            
+            print(zip.read(files[i]))
+
+
 def recordingAudio():
     global recording
     recording = False
+    
 
 
 
@@ -72,6 +101,7 @@ def startRecording():
     wf.setframerate(RATE)
     wf.writeframes(b''.join(frames))
     wf.close()
+    to_atm(frames, WAVE_OUTPUT_FILENAME)
 
 
 
@@ -149,16 +179,4 @@ open_audio_button.pack(
 window.geometry("700x1200")
 window.mainloop()
 
-#---ARCHIVOS_ATM-----
 
-def to_atm(chunksList, wavFilePath):
-    file = open("chunks.s", "w+")
-    content = str(chunksList)
-    file.write(content)
-    with ZipFile('file.atm', 'w') as zip:
-         zip.write('chunks.s')
-         zip.write(wavFilePath)
-    try:
-        os.remove("chunks.s")
-    except:
-        print("File already deleted")
