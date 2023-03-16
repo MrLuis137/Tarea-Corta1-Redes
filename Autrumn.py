@@ -25,7 +25,7 @@ WAVE_OUTPUT_FILENAME = "output.wav"
 p = pyaudio.PyAudio()
 frames = []
 recording = False
-
+wavFile= []
 
 
 #---ARCHIVOS_ATM-----
@@ -44,12 +44,18 @@ def to_atm(chunksList, wavFilePath):
         print("File already deleted")
 
 def from_atm(filepath):
-    with ZipFile(filepath, 'w') as zip:
+    with ZipFile(filepath) as zip:
         files = zip.namelist();
+        print(files)
         for i in range(0,len(files)):
             if(files[i] == WAVE_OUTPUT_FILENAME):
-                open_wav_file(zip.read(files[i]))
+                global wavFile
+                zip.extract(files[i])
+                wavFile = open_wav_file(files[i])
+                print("wavFile")
+                print(wavFile)
             elif(files[i] == WAVE_OUTPUT_FILENAME):
+                global frames
                 frames = zip.read(files[i]);
             
             print(zip.read(files[i]))
@@ -58,7 +64,7 @@ def from_atm(filepath):
 
 def open_wav_file(file):
     #en progreso
-    wf = wave.open(file, 'rb')
+    return wave.open(file, 'rb')
 
 def recordingAudio():
     global recording
@@ -103,6 +109,14 @@ def startRecording():
     wf.writeframes(b''.join(frames))
     wf.close()
     to_atm(frames, WAVE_OUTPUT_FILENAME)
+    #test
+    print(frames)
+    print(wavFile)
+    from_atm("file.atm")
+    #print("frames")
+    #print(frames)
+    #print("wav file")
+    print(wavFile)
 
 
 
