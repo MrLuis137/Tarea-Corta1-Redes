@@ -24,9 +24,14 @@ WAVE_OUTPUT_FILENAME = "output.wav"
 
 p = pyaudio.PyAudio()
 frames = []
+fourier_frames = []
+vec_fourier_frames = []
+
 recording = False
 
-
+# ----Transformada de Fourier-----
+N = 600  # Número de puntos de muestra
+T = 1.0 / 800.0  # Espaciado de muestra
 
 #---ARCHIVOS_ATM-----
 
@@ -77,20 +82,34 @@ def startRecording():
     global frames
     frames = []
     recording = True
+    global fourier_frames
+    fourier_frames = []
+    global vec_fourier_frames
+    vec_fourier_frames = []= []
+    
     i = 0
     while(recording):
 
         data = stream.read(CHUNK)
         numpydata = np.frombuffer(data, dtype=np.int16)
         frames.append(numpydata)
+        transformada = fft(numpydata)  #transformada de fourier
+        vec_frec = fftfreq(N, T)[:N//2]  #vector de frecuencia correspondiente a los coeficientes de la trasnformada de fourier
+        vec_fourier_frames.append(vec_frec) 
+        fourier_frames.append(transformada)
+        print("tiemp-> ",numpydata)
+        print("freq-> ",transformada)
+        
         if(i>=int(RATE / CHUNK * RECORD_SECONDS)):
             updatetimecanvas(np.hstack(frames))
+            updatefreqcanvas( transformada,vec_frec)
             i=0
 
         i+=1
 
     numpyarrayfinal = np.hstack(frames)
     updatetimecanvas(numpyarrayfinal)
+    
 
     stream.stop_stream()
     stream.close()
@@ -121,7 +140,7 @@ window.title("Autrumn")
 fig = Figure(figsize=(5, 3), dpi=100)
 fig.add_subplot(111).plot(frames)
 fig2 = Figure(figsize=(5, 3), dpi=100)
-fig2.add_subplot(111).plot()
+fig2.add_subplot(111).plot(vec_fourier_frames, 2.0/N * np.abs(fourier_frames[0:N//2]))
 
 frame1 = tk.Frame(window)
 frame2 = tk.Frame(window)
@@ -140,11 +159,11 @@ def updatetimecanvas(timeframe):
     fig.add_subplot(111).plot(timeframe)  # generate random x/y
     canvas.draw_idle()
 
-def updatefreqcanvas(fourierframe, vec_frec_frame):
+def updatefreqcanvas(fourierframe, freq_frame):
 
-    fig.clear()
-    fig.add_subplot(112).plot(vec_frec_frame, 2.0/N * np.abs(fourierframe[0:N//2]))  #graphic creation
-    canvas.draw_idle()
+    fig2.clear()
+    fig2.add_subplot(111).plot(freq_frame, 2.0/N * np.abs(fourierframe[0:N//2]))  #graphic creation
+    canvas2.draw_idle()
 
 frame1.pack(side=tk.TOP, fill=tk.X)
 canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.X)
@@ -194,7 +213,8 @@ T = 1.0 / 800.0  # Espaciado de muestra
 def fourier():
     global fourier_frames
     fourier_frames = []
-    vec_fourier_frames = []
+    global vec_fourier_frames
+    vec_fourier_frames = []= []
     i=0
     print("* TRANSFORMA")
     while (len(frames)>i):
