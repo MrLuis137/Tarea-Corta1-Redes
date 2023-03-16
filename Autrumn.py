@@ -13,6 +13,7 @@ from matplotlib.figure import Figure
 from zipfile import ZipFile
 from scipy.io.wavfile import write
 from os import remove
+from scipy.fft import fft, fftfreq
 
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
@@ -111,6 +112,7 @@ def start_recording_thread():
     x = threading.Thread(target=startRecording)
     x.start()
 
+    
 window = tk.Tk()
 window.title("Autrumn")
 
@@ -130,6 +132,7 @@ canvas2 = FigureCanvasTkAgg(fig2, window)
 toolbar2 = NavigationToolbar2Tk(canvas2, frame2)
 
 
+
 def updatetimecanvas(timeframe):
 
 
@@ -137,7 +140,11 @@ def updatetimecanvas(timeframe):
     fig.add_subplot(111).plot(timeframe)  # generate random x/y
     canvas.draw_idle()
 
+def updatefreqcanvas(fourierframe, vec_frec_frame):
 
+    fig.clear()
+    fig.add_subplot(112).plot(vec_frec_frame, 2.0/N * np.abs(fourierframe[0:N//2]))  #graphic creation
+    canvas.draw_idle()
 
 frame1.pack(side=tk.TOP, fill=tk.X)
 canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.X)
@@ -180,3 +187,23 @@ window.geometry("700x1200")
 window.mainloop()
 
 
+# ----Transformada de Fourier-----
+N = 600  # Número de puntos de muestra
+T = 1.0 / 800.0  # Espaciado de muestra
+
+def fourier():
+    global fourier_frames
+    fourier_frames = []
+    vec_fourier_frames = []
+    i=0
+    print("* TRANSFORMA")
+    while (len(frames)>i):
+        array = frames[i]  #se toma un chunck
+        transformada = fft(array)  #transformada de fourier
+        vec_frec = xf = fftfreq(N, T)[:N//2]  #vector de frecuencia correspondiente a los coeficientes de la trasndormada de fourier
+        vec_fourier_frames.append(vec_frec) 
+        fourier_frames.append(transformada)
+        updatefreqcanvas(transformada,vec_frec)
+        
+        i+=1
+        
