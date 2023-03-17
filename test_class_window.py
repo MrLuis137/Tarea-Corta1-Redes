@@ -40,6 +40,7 @@ recording = False
 wavFile= []
 fourier_frames = []
 vec_fourier_frames = []
+external_wav_path = ""
 
 
     #---ARCHIVOS_ATM-----
@@ -66,7 +67,7 @@ def from_atm(filepath):
     with ZipFile(filepath) as zip:
         files = zip.namelist()
         for i in range(0,len(files)):
-            if(files[i] == WAVE_OUTPUT_FILENAME):
+            if(".wav" in files[i]):
                 global wavFile
                 zip.extract(files[i])
                 wavFile = open_wav_file(files[i])
@@ -231,6 +232,8 @@ class Analizador(tk.Frame):
     def load_wav(self):
         chunk = 1024  
         f = wave.open(self.entry.get(), 'rb')
+        global external_wav_path
+        external_wav_path = self.entry.get()
         p = pyaudio.PyAudio()
         global frames
         frames=[]
@@ -283,7 +286,7 @@ class Analizador(tk.Frame):
         wf.setframerate(RATE)
         wf.writeframes(b''.join(frames))
         wf.close()
-        ##to_atm(frames, WAVE_OUTPUT_FILENAME)
+        to_atm(frames, ( WAVE_OUTPUT_FILENAME if external_wav_path == "" else external_wav_path))
 
 
     def recordingAudio(self):
