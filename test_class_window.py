@@ -56,8 +56,7 @@ def to_atm(chunksList, wavFilePath):
 
 def from_atm(filepath):
     with ZipFile(filepath) as zip:
-        files = zip.namelist();
-        print(files)
+        files = zip.namelist()
         for i in range(0,len(files)):
             if(files[i] == WAVE_OUTPUT_FILENAME):
                 global wavFile
@@ -65,9 +64,8 @@ def from_atm(filepath):
                 wavFile = open_wav_file(files[i])
             elif(files[i] == WAVE_OUTPUT_FILENAME):
                 global frames
-                frames = zip.read(files[i]);
+                frames = zip.read(files[i])
             
-            print(zip.read(files[i]))
 
 #---ARCHIVOS_ATM-----
 
@@ -225,8 +223,6 @@ class Analizador(tk.Frame):
                 elif(files[i] == WAVE_OUTPUT_FILENAME):
                     frames = zip.read(files[i]);
 
-                print(zip.read(files[i]))
-
     #---ARCHIVOS_ATM-----
 
     def open_wav_file(self, file):
@@ -360,7 +356,7 @@ class Reproductor(tk.Frame):
         self.btn_pause.grid(row = 0, column = 3, padx = 10, pady = 10)
 
         self.btn_stop = ttk.Button(self, text ="stop",
-                            command = lambda : print("stop"))
+                            command = lambda : self.stop())
         self.btn_stop.grid(row = 0, column = 4, padx = 10, pady = 10)
        
         # Posicionarla en la ventana.
@@ -368,9 +364,10 @@ class Reproductor(tk.Frame):
     
     def create_player(self):
         path = ""
-        from_atm(path)
+        from_atm(self.entry.get())
+        global wavFile
         self.player = AudioPlayer(wavFile)
-
+        self.player.load()
     def play(self):
         hilo = threading.Thread(target=self.player.play)
         hilo.start()
