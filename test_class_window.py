@@ -257,6 +257,7 @@ class Analizador(tk.Frame):
         wf.setframerate(RATE)
         wf.writeframes(b''.join(frames))
         wf.close()
+        print(numpyarrayfinal)
         to_atm(frames, WAVE_OUTPUT_FILENAME)
 
 
@@ -274,7 +275,7 @@ class Analizador(tk.Frame):
 
  
 class AudioPlayer:
-    def __init__(self, wav):
+    def __init__(self, wav,figtime, figfreq, canvasTime):
         self.filename = "test"
         self.chunk = 1024
         self.paused = False
@@ -282,7 +283,18 @@ class AudioPlayer:
         self.wave_file = wav
         self.p = 0
         self.stream = 0
-        self.time = 0
+        self.timer = 0
+        self.fig =figtime
+        self.fig2 = figfreq
+        self.canvas = canvasTime
+
+    def updatetimecanvas(self, timeframe, lowertime, uppertime):
+        print(lowertime)
+        print(uppertime)
+        self.fig.clear()
+        self.fig.add_subplot(111).plot(timeframe)  # generate random x/y
+        self.canvas.draw_idle()
+
 
     def load(self):
         #self.wave_file = wave.open(self.filename, 'rb')
@@ -296,20 +308,36 @@ class AudioPlayer:
     
     def play(self):
         data = self.wave_file.readframes(self.chunk)
+        global frames
+        print(frames)
+        lowertime = 0
+        uppertime = 5
+        self.updatetimecanvas(np.hstack(frames), int(RATE / CHUNK * lowertime), int(RATE / CHUNK * uppertime))
         while data != b'' and not self.stopped:
             if not self.paused:
                 start_time = time.time()
                 self.stream.write(data)
                 data = self.wave_file.readframes(self.chunk)
                 end_time = time.time()
-                self.time += end_time - start_time
+                self.timer += end_time - start_time
+                frameschanged = frames[lowertime:uppertime]
+
+                ## Función de tiempo
+                if self.timer >= uppertime:
+                    self.updatetimecanvas(np.hstack(frameschanged), int(RATE / CHUNK * lowertime), int(RATE / CHUNK * uppertime))
+                    lowertime += 5
+                    uppertime += 5
+
+
+
+
             else:
                 time.sleep(0.1)
         self.stop()
     
     def pause(self):
         self.paused = True
-        print(self.time)
+        print(self.timer)
     
     def resume(self):
         self.paused = False
@@ -325,7 +353,7 @@ class AudioPlayer:
 
 # second window frame page1
 class Reproductor(tk.Frame):
-    player = AudioPlayer(wavFile)
+    player = AudioPlayer(wavFile,0,0,0)
     playing = False
     def __init__(self, parent, controller):
          
@@ -384,7 +412,7 @@ class Reproductor(tk.Frame):
         path = ""
         from_atm(self.entry.get())
         global wavFile
-        self.player = AudioPlayer(wavFile)
+        self.player = AudioPlayer(wavFile, self.fig, self.fig2, self.canvas)
         self.player.load()
 
     def play(self):
