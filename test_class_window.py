@@ -290,42 +290,7 @@ class Analizador(tk.Frame):
         self.fig.add_subplot(111).plot(timeframe)  # generate random x/y
         self.canvas.draw_idle()
 
-
-# second window frame page1
-class Reproductor(tk.Frame):
-     
-    def __init__(self, parent, controller):
-         
-        tk.Frame.__init__(self, parent)
-        self.label = ttk.Label(self, text ="Reproductor", font = LARGEFONT)
-        self.label.grid(row = 0, column = 0, padx = 10, pady = 10)
-
-        self.entry = ttk.Entry(self)
-        self.entry.grid(row = 0, column = 1, padx = 10, pady = 10)
-  
-        self.btn_play = ttk.Button(self, text ="play",
-                            command = lambda : print("play"))
-        self.btn_play.grid(row = 0, column = 2, padx = 10, pady = 10)
-
-        self.btn_pause = ttk.Button(self, text ="pause",
-                            command = lambda : print("pause"))
-        self.btn_pause.grid(row = 0, column = 3, padx = 10, pady = 10)
-
-        self.btn_stop = ttk.Button(self, text ="stop",
-                            command = lambda : print("stop"))
-        self.btn_stop.grid(row = 0, column = 4, padx = 10, pady = 10)
-       
-        # Posicionarla en la ventana.
-        # self.entry.place(x=50, y=50)
-    
-
-# Driver Code
-autrumn = Autrumn()
-autrumn.mainloop()
-
-
-  
-  
+ 
 class AudioPlayer:
     def __init__(self, wav):
         self.filename = "test"
@@ -368,25 +333,58 @@ class AudioPlayer:
         self.stream.close()
         self.p.terminate()
         self.wave_file.close()
-        
+
+# second window frame page1
+class Reproductor(tk.Frame):
+    player = AudioPlayer(wavFile)
+    playing = False
+    def __init__(self, parent, controller):
+         
+        tk.Frame.__init__(self, parent)
+        self.label = ttk.Label(self, text ="Reproductor", font = LARGEFONT)
+        self.label.grid(row = 0, column = 0, padx = 10, pady = 10)
+
+        self.btn_load = ttk.Button(self, text ="Load",
+                            command = lambda : self.create_player() )
+        self.btn_load.grid(row = 1, column = 1, padx = 10, pady = 10)
+
+        self.entry = ttk.Entry(self)
+        self.entry.grid(row = 0, column = 1, padx = 10, pady = 10)
+  
+        self.btn_play = ttk.Button(self, text ="play",
+                            command = lambda : self.play())
+        self.btn_play.grid(row = 0, column = 2, padx = 10, pady = 10)
+
+        self.btn_pause = ttk.Button(self, text ="pause",
+                            command = lambda : self.pause())
+        self.btn_pause.grid(row = 0, column = 3, padx = 10, pady = 10)
+
+        self.btn_stop = ttk.Button(self, text ="stop",
+                            command = lambda : print("stop"))
+        self.btn_stop.grid(row = 0, column = 4, padx = 10, pady = 10)
+       
+        # Posicionarla en la ventana.
+        # self.entry.place(x=50, y=50)
+    
+    def create_player(self):
+        path = ""
+        from_atm(path)
+        self.player = AudioPlayer(wavFile)
+
+    def play(self):
+        hilo = threading.Thread(target=self.player.play)
+        hilo.start()
+
+    def pause(self):
+        if self.player.paused == False:
+            self.player.pause()
+        else:
+            self.player.resume() 
+    
+    def stop(self):
+        self.player.stop()
 
 
-
-player = AudioPlayer(wavFile)
-
-print("start")
-player.load()
-time.sleep(5)
-
-print("play")
-hilo = threading.Thread(target=player.play)
-hilo.start()
-print("pause")
-time.sleep(5)
-player.pause() 
-print("resume")
-time.sleep(5)
-player.resume() 
-print("stop")    
-time.sleep(5)
-player.stop()
+# Driver Code
+autrumn = Autrumn()
+autrumn.mainloop()
