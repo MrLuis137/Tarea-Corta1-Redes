@@ -59,7 +59,7 @@ def to_atm(chunksList, wavFilePath):
          zip.write(wavFilePath)
          print(chunksList)
     try:
-        os.remove("./chunks")
+        os.remove("chunks")
     except:
         print("File already deleted")
 
@@ -77,13 +77,13 @@ def from_atm(filepath):
                 print(type(frames))
                 print(frames)
                
-def array_to_bytes(x: np.ndarray) -> bytes:
+def array_to_bytes(x):
     np_bytes = BytesIO()
     np.save(np_bytes, x, allow_pickle=True)
     return np_bytes.getvalue()
 
 
-def bytes_to_array(b: bytes) -> np.ndarray:
+def bytes_to_array(b):
     np_bytes = BytesIO(b)
     return np.load(np_bytes, allow_pickle=True)
             
