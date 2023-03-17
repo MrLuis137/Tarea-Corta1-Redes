@@ -13,7 +13,7 @@ from matplotlib.figure import Figure
 from zipfile import ZipFile
 from scipy.io.wavfile import write
 from os import remove
-from scipy.fft import fft, fftfreq
+from scipy.fft import fft, fftfreq, fftshift
 
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
@@ -24,18 +24,17 @@ WAVE_OUTPUT_FILENAME = "output.wav"
 
 p = pyaudio.PyAudio()
 frames = []
-<<<<<<< HEAD
+
 fourier_frames = []
 vec_fourier_frames = []
 
 recording = False
-=======
-recording = False
 wavFile= []
->>>>>>> master
+
+lenght=0
 
 # ----Transformada de Fourier-----
-N = 600  # Número de puntos de muestra
+N = 400  # Número de puntos de muestra
 T = 1.0 / 800.0  # Espaciado de muestra
 
 #---ARCHIVOS_ATM-----
@@ -56,7 +55,7 @@ def to_atm(chunksList, wavFilePath):
 def from_atm(filepath):
     with ZipFile(filepath) as zip:
         files = zip.namelist();
-        print(files)
+       # print(files)
         for i in range(0,len(files)):
             if(files[i] == WAVE_OUTPUT_FILENAME):
                 global wavFile
@@ -68,7 +67,7 @@ def from_atm(filepath):
                 global frames
                 frames = zip.read(files[i]);
             
-            print(zip.read(files[i]))
+            #print(zip.read(files[i]))
 
 #---ARCHIVOS_ATM-----
 
@@ -105,15 +104,24 @@ def startRecording():
         numpydata = np.frombuffer(data, dtype=np.int16)
         frames.append(numpydata)
         transformada = fft(numpydata)  #transformada de fourier
+        lenght=len(numpydata)
         vec_frec = fftfreq(N, T)[:N//2]  #vector de frecuencia correspondiente a los coeficientes de la trasnformada de fourier
+        #vec_fourier_frames.append(vec_frec) 
+        #fourier_frames.append(transformada)
+
+        #print("tiemp-> ",numpydata)
+        #print("freq-> ",transformada)
+        
+        #Se reorganiza el espectro de frecuencias utilizando la funcion ffshift de spicy
+        vec_frec=fftshift(vec_frec)
+        transformada_plot=fftshift(transformada)
         vec_fourier_frames.append(vec_frec) 
-        fourier_frames.append(transformada)
-        print("tiemp-> ",numpydata)
-        print("freq-> ",transformada)
+        fourier_frames.append(transformada_plot)
+ 
         
         if(i>=int(RATE / CHUNK * RECORD_SECONDS)):
             updatetimecanvas(np.hstack(frames))
-            updatefreqcanvas( transformada,vec_frec)
+            updatefreqcanvas( transformada_plot,vec_frec)
             i=0
 
         i+=1
@@ -134,13 +142,13 @@ def startRecording():
     wf.close()
     to_atm(frames, WAVE_OUTPUT_FILENAME)
     #test
-    print(frames)
-    print(wavFile)
+   # print(frames)
+   # print(wavFile)
     from_atm("file.atm")
     #print("frames")
     #print(frames)
     #print("wav file")
-    print(wavFile)
+   # print(wavFile)
 
 
 
@@ -175,13 +183,18 @@ def updatetimecanvas(timeframe):
 
 
     fig.clear()
-    fig.add_subplot(111).plot(timeframe)  # generate random x/y
+    ax = fig.add_subplot(111)
+    ax.plot(timeframe)
+    ax.set_xlabel('Tiempo(s)')
+    ax.set_ylabel('Amplitud')
     canvas.draw_idle()
 
 def updatefreqcanvas(fourierframe, freq_frame):
-
     fig2.clear()
-    fig2.add_subplot(111).plot(freq_frame, 2.0/N * np.abs(fourierframe[0:N//2]))  #graphic creation
+    ax = fig2.add_subplot(111)
+    ax.plot(freq_frame, 2.0/N * np.abs(fourierframe[0:N//2]))
+    ax.set_xlabel('Frecuencia (Hz)')
+    ax.set_ylabel('Amplitud')
     canvas2.draw_idle()
 
 frame1.pack(side=tk.TOP, fill=tk.X)
