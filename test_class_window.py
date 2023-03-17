@@ -23,6 +23,7 @@ from zipfile import ZipFile
 from scipy.io.wavfile import write
 from os import remove
 import time
+from scipy.fft import rfft
  
 LARGEFONT =("Verdana", 15)
 CHUNK = 1024
@@ -36,6 +37,7 @@ p = pyaudio.PyAudio()
 frames = []
 recording = False
 wavFile= []
+fourier_frames = []
 
 
     #---ARCHIVOS_ATM-----
@@ -166,38 +168,48 @@ class Analizador(tk.Frame):
         tk.Frame.__init__(self, parent)
          
         # label of frame Layout 2
-        label = ttk.Label(self, text ="Analizador", font = LARGEFONT)
+        
+        top_frame = tk.Frame(self, width=200, height=400, bg='grey')
+        label = ttk.Label(top_frame, text ="Analizador", font = LARGEFONT)
+        top_frame.grid(row=0, column=0, padx=10, pady=5)
         label.grid(row = 0, column = 0, padx = 10, pady = 10)
          
         self.fig = Figure(figsize=(5, 3), dpi=100)
         self.fig.add_subplot(111).plot(frames)
         self.fig2 = Figure(figsize=(5, 3), dpi=100)
-        self.fig2.add_subplot(111).plot()
+        self.fig2.add_subplot(111).hist(fourier_frames, bins=100)
+        self.ax= 0
+        self.entry = ttk.Entry(top_frame)
+        self.entry.grid(row = 0, column = 1, padx = 10, pady = 10)
+
+        self.btn_load = ttk.Button(top_frame, text ="Load",
+                            command = lambda : self.load_wav(self.entry.get()) )
+        self.btn_load.grid(row = 1, column = 1, padx = 10, pady = 10)
 
         start_recording_button = ttk.Button(
             #controller,
-            self,
+            top_frame,
             text='Start recording',
             compound=tk.LEFT,
             command=self.start_recording_thread
         )
-        start_recording_button.grid(row = 0, column = 1, padx = 10, pady = 10)
+        start_recording_button.grid(row = 0, column = 2, padx = 10, pady = 10)
 
         stop_recording_button = ttk.Button(
-            self,
+            top_frame,
             text='Stop recording',
             compound=tk.LEFT,
             command=self.recordingAudio
         )
-        stop_recording_button.grid(row = 1, column = 1, padx = 10, pady = 10)
+        stop_recording_button.grid(row = 0, column = 3, padx = 10, pady = 10)
 
         open_audio_button = ttk.Button(
-            self,
+            top_frame,
             text='Open audio',
             compound=tk.LEFT,
             command=self.recordingAudio
         )
-        open_audio_button.grid(row = 2, column = 1, padx = 10, pady = 10)
+        open_audio_button.grid(row = 0, column = 4, padx = 10, pady = 10)
 
 
         self.frame1 = tk.Frame(self)
@@ -209,10 +221,34 @@ class Analizador(tk.Frame):
         self.toolbar2 = NavigationToolbar2Tk(self.canvas2, self.frame2)
 
 
-        self.frame1.grid(row = 4, column = 1, padx = 10, pady = 10)
-        self.canvas.get_tk_widget().grid(row = 5, column = 1, padx = 10, pady = 10)
-        self.frame2.grid(row = 6, column = 1, padx = 10, pady = 10)
-        self.canvas2.get_tk_widget().grid(row = 7, column = 1, padx = 10, pady = 10)
+        self.frame1.grid(row = 4, column = 0, padx = 10, pady = 10)
+        self.canvas.get_tk_widget().grid(row = 5, column = 0, padx = 10, pady = 10)
+        self.frame2.grid(row = 6, column = 0, padx = 10, pady = 10)
+        self.canvas2.get_tk_widget().grid(row = 7, column = 0, padx = 10, pady = 10)
+
+    def load_wav(self, file_name):
+        chunk = 1024  
+        f = wave.open(file_name, 'rb')
+        p = pyaudio.PyAudio()  
+        #open stream  
+        stream = p.open(format = p.get_format_from_width(f.getsampwidth()),  
+                        channels = f.getnchannels(),  
+                        rate = f.getframerate(),  
+                        output = True)  
+        #read data  
+        data = f.readframes(chunk)  
+
+        #play stream  
+        while data:  
+            stream.write(data)  
+            data = f.readframes(chunk)  
+
+        #stop stream  
+        stream.stop_stream()  
+        stream.close()  
+
+        #close PyAudio  
+        p.terminate()  
 
 
     def recordingAudio(self):
@@ -232,14 +268,31 @@ class Analizador(tk.Frame):
         global frames
         frames = []
         recording = True
+        global fourier_frames
+        fourier_frames = []
+        
         i = 0
         while(recording):
 
             data = stream.read(CHUNK)
             numpydata = np.frombuffer(data, dtype=np.int16)
             frames.append(numpydata)
+            
+            #Se calcula la transformada de fourier
+            transformada = rfft(numpydata) 
+            
+            # Concatenación de la mitad de la Transformada de Fourier con su reflexión simétrica
+            full_spectrum = np.concatenate((transformada, np.flip(transformada)))
+            
+            #para mostrar ambos lados del espectro
+            shifted_spectrum =  np.fft.fftshift(full_spectrum)
+
+            #se agrega el nuevo calculo a los frames antes calculados
+            fourier_frames.append(np.real(shifted_spectrum))
+            
             if(i>=int(RATE / CHUNK * RECORD_SECONDS)):
                 self.updatetimecanvas(np.hstack(frames))
+                self.updatefouriercanvas(np.hstack(fourier_frames))
                 i=0
 
             i+=1
@@ -273,7 +326,17 @@ class Analizador(tk.Frame):
         self.fig.add_subplot(111).plot(timeframe)  # generate random x/y
         self.canvas.draw_idle()
 
- 
+    def updatefouriercanvas(self,freqframe):
+        self.fig2.clear()
+        
+        self.ax = self.fig2.add_subplot(111)
+        self.ax.hist(freqframe, bins=350)
+        
+        self.ax.set_xlabel('Magnitud')
+        self.ax.set_ylabel('Frecuencia')
+        #ax.set_xlim(-3000, 3000)
+        self.canvas2.draw_idle()
+    
 class AudioPlayer:
     def __init__(self, wav,figtime, figfreq, canvasTime):
         self.filename = "test"
