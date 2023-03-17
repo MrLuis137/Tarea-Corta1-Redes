@@ -317,27 +317,52 @@ class Reproductor(tk.Frame):
          
         tk.Frame.__init__(self, parent)
         self.label = ttk.Label(self, text ="Reproductor", font = LARGEFONT)
+        top_frame = tk.Frame(self, width=200, height=400, bg='grey')
+        top_frame.grid(row=0, column=0, padx=10, pady=5)
+        self.label = ttk.Label(top_frame, text ="Reproductor", font = LARGEFONT)
         self.label.grid(row = 0, column = 0, padx = 10, pady = 10)
 
-        self.btn_load = ttk.Button(self, text ="Load",
+        self.btn_load = ttk.Button(top_frame, text ="Load",
                             command = lambda : self.create_player() )
         self.btn_load.grid(row = 1, column = 1, padx = 10, pady = 10)
 
-        self.entry = ttk.Entry(self)
+        self.entry = ttk.Entry(top_frame)
         self.entry.grid(row = 0, column = 1, padx = 10, pady = 10)
   
-        self.btn_play = ttk.Button(self, text ="play",
+        self.btn_play = ttk.Button(top_frame, text ="play",
                             command = lambda : self.play())
         self.btn_play.grid(row = 0, column = 2, padx = 10, pady = 10)
 
-        self.btn_pause = ttk.Button(self, text ="pause",
+        self.btn_pause = ttk.Button(top_frame, text ="pause",
                             command = lambda : self.pause())
         self.btn_pause.grid(row = 0, column = 3, padx = 10, pady = 10)
 
-        self.btn_stop = ttk.Button(self, text ="stop",
+        self.btn_stop = ttk.Button(top_frame, text ="stop",
                             command = lambda : self.stop())
         self.btn_stop.grid(row = 0, column = 4, padx = 10, pady = 10)
-       
+
+
+        self.fig = Figure(figsize=(5, 3), dpi=100)
+        self.fig.add_subplot(111).plot(frames)
+        self.fig2 = Figure(figsize=(5, 3), dpi=100)
+        self.fig2.add_subplot(111).plot()
+
+
+
+        self.frame1 = tk.Frame(self)
+        self.frame2 = tk.Frame(self)
+
+        self.canvas = FigureCanvasTkAgg(self.fig, self)
+        self.toolbar = NavigationToolbar2Tk(self.canvas, self.frame1)
+        self.canvas2 = FigureCanvasTkAgg(self.fig2, self)
+        self.toolbar2 = NavigationToolbar2Tk(self.canvas2, self.frame2)
+
+
+        self.frame1.grid(row = 1, column = 0, padx = 10, pady = 10)
+        self.canvas.get_tk_widget().grid(row = 2, column = 0, padx = 10, pady = 10)
+        self.frame2.grid(row = 3, column = 0, padx = 10, pady = 10)
+        self.canvas2.get_tk_widget().grid(row = 4, column = 0, padx = 10, pady = 10)
+
         # Posicionarla en la ventana.
         # self.entry.place(x=50, y=50)
     
