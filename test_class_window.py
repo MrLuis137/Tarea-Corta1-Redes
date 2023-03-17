@@ -23,7 +23,7 @@ from scipy.io.wavfile import write
 from os import remove
 import time
  
-LARGEFONT =("Verdana", 35)
+LARGEFONT =("Verdana", 15)
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
@@ -113,8 +113,9 @@ class Autrumn(tk.Tk):
 
         # creating a container
         container = tk.Frame(self) 
-        container.pack(side = "top", fill = "both", expand = True)
-  
+        container.grid(row = 1, column = 1, padx = 10, pady = 10)
+        
+
         container.grid_rowconfigure(0, weight = 1)
         container.grid_columnconfigure(0, weight = 1)
   
@@ -152,7 +153,7 @@ class Analizador(tk.Frame):
          
         # label of frame Layout 2
         label = ttk.Label(self, text ="Analizador", font = LARGEFONT)
-        label.grid(row = 0, column = 4, padx = 10, pady = 10)
+        label.grid(row = 0, column = 0, padx = 10, pady = 10)
          
         self.fig = Figure(figsize=(5, 3), dpi=100)
         self.fig.add_subplot(111).plot(frames)
@@ -166,7 +167,7 @@ class Analizador(tk.Frame):
             compound=tk.LEFT,
             command=self.start_recording_thread
         )
-        start_recording_button.grid(row = 1, column = 1, padx = 10, pady = 10)
+        start_recording_button.grid(row = 0, column = 1, padx = 10, pady = 10)
 
         stop_recording_button = ttk.Button(
             self,
@@ -174,7 +175,7 @@ class Analizador(tk.Frame):
             compound=tk.LEFT,
             command=self.recordingAudio
         )
-        stop_recording_button.grid(row = 2, column = 1, padx = 10, pady = 10)
+        stop_recording_button.grid(row = 1, column = 1, padx = 10, pady = 10)
 
         open_audio_button = ttk.Button(
             self,
@@ -182,23 +183,55 @@ class Analizador(tk.Frame):
             compound=tk.LEFT,
             command=self.recordingAudio
         )
-        open_audio_button.grid(row = 3, column = 1, padx = 10, pady = 10)
+        open_audio_button.grid(row = 2, column = 1, padx = 10, pady = 10)
 
 
-        frame1 = tk.Frame(controller)
-        frame2 = tk.Frame(controller)
+        self.frame1 = tk.Frame(self)
+        self.frame2 = tk.Frame(self)
 
-        self.canvas = FigureCanvasTkAgg(self.fig, controller)
-        self.toolbar = NavigationToolbar2Tk(self.canvas, frame1)
-        self.canvas2 = FigureCanvasTkAgg(self.fig2, controller)
-        self.toolbar2 = NavigationToolbar2Tk(self.canvas2, frame2)
-
-        frame1.pack(side=tk.TOP, fill=tk.X)
-        self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.X)
-        frame2.pack(side=tk.TOP, fill=tk.X)
-        self.canvas2.get_tk_widget().pack(side=tk.TOP, fill=tk.X)
+        self.canvas = FigureCanvasTkAgg(self.fig, self)
+        self.toolbar = NavigationToolbar2Tk(self.canvas, self.frame1)
+        self.canvas2 = FigureCanvasTkAgg(self.fig2, self)
+        self.toolbar2 = NavigationToolbar2Tk(self.canvas2, self.frame2)
 
 
+        self.frame1.grid(row = 4, column = 1, padx = 10, pady = 10)
+        self.canvas.get_tk_widget().grid(row = 5, column = 1, padx = 10, pady = 10)
+        self.frame2.grid(row = 6, column = 1, padx = 10, pady = 10)
+        self.canvas2.get_tk_widget().grid(row = 7, column = 1, padx = 10, pady = 10)
+
+
+    #---ARCHIVOS_ATM-----
+
+    def to_atm(self, chunksList, wavFilePath):
+        file = open("chunks", "w+")
+        content = str(chunksList)
+        file.write(content)
+        file.close
+        with ZipFile('file.atm', 'w') as zip:
+            zip.write('chunks')
+            zip.write(wavFilePath)
+        try:
+            os.remove("./chunks")
+        except:
+            print("File already deleted")
+
+    def from_atm(self, filepath):
+        with ZipFile(filepath, 'w') as zip:
+            files = zip.namelist();
+            for i in range(0,len(files)):
+                if(files[i] == WAVE_OUTPUT_FILENAME):
+                    self.open_wav_file(zip.read(files[i]))
+                elif(files[i] == WAVE_OUTPUT_FILENAME):
+                    frames = zip.read(files[i]);
+
+                print(zip.read(files[i]))
+
+    #---ARCHIVOS_ATM-----
+
+    def open_wav_file(self, file):
+        #en progreso
+        wf = wave.open(file, 'rb')
 
     def recordingAudio(self):
         global recording
@@ -264,21 +297,26 @@ class Reproductor(tk.Frame):
     def __init__(self, parent, controller):
          
         tk.Frame.__init__(self, parent)
-        label = ttk.Label(self, text ="Reproductor", font = LARGEFONT)
-        label.grid(row = 0, column = 4, padx = 10, pady = 10)
+        self.label = ttk.Label(self, text ="Reproductor", font = LARGEFONT)
+        self.label.grid(row = 0, column = 0, padx = 10, pady = 10)
+
+        self.entry = ttk.Entry(self)
+        self.entry.grid(row = 0, column = 1, padx = 10, pady = 10)
   
-        btn_play = ttk.Button(self, text ="play",
+        self.btn_play = ttk.Button(self, text ="play",
                             command = lambda : print("play"))
-        btn_play.grid(row = 1, column = 1, padx = 10, pady = 10)
+        self.btn_play.grid(row = 0, column = 2, padx = 10, pady = 10)
 
-        btn_pause = ttk.Button(self, text ="pause",
+        self.btn_pause = ttk.Button(self, text ="pause",
                             command = lambda : print("pause"))
-        btn_pause.grid(row = 2, column = 1, padx = 10, pady = 10)
+        self.btn_pause.grid(row = 0, column = 3, padx = 10, pady = 10)
 
-        btn_stop = ttk.Button(self, text ="stop",
+        self.btn_stop = ttk.Button(self, text ="stop",
                             command = lambda : print("stop"))
-        btn_stop.grid(row = 3, column = 1, padx = 10, pady = 10)
-  
+        self.btn_stop.grid(row = 0, column = 4, padx = 10, pady = 10)
+       
+        # Posicionarla en la ventana.
+        # self.entry.place(x=50, y=50)
     
 
 # Driver Code
