@@ -32,6 +32,7 @@ CHANNELS = 1
 RATE = 44100
 RECORD_SECONDS = 2
 WAVE_OUTPUT_FILENAME = "output.wav"
+PLAY_RANGE = 5
 
 p = pyaudio.PyAudio()
 frames = []
@@ -389,14 +390,18 @@ class AudioPlayer:
         self.fig2 = figfreq
         self.canvas = canvasTime
 
-    def updatetimecanvas(self, timeframe, lowertime, uppertime):
-        print(lowertime)
-        print(uppertime)
+    def updatetimecanvas(self, timeframe):
+
+
         self.fig.clear()
-        self.fig.add_subplot(111).plot(timeframe)  # generate random x/y
+        self.fig.add_subplot(111).plot(timeframe)  # Genera un plot con los valores especificado
         self.canvas.draw_idle()
-
-
+    def check_realtime(self, multiplier):
+        global frames
+        if (43 * (multiplier + 1) * PLAY_RANGE <= len(frames)):
+            self.updatetimecanvas(np.hstack(frames[43*multiplier*PLAY_RANGE:43 * (multiplier + 1) * PLAY_RANGE]))
+        else:
+            self.updatetimecanvas(np.hstack(frames[43 * multiplier * PLAY_RANGE:len(frames)-1]))
     def load(self):
         #self.wave_file = wave.open(self.filename, 'rb')
         self.p = pyaudio.PyAudio()
@@ -411,9 +416,10 @@ class AudioPlayer:
         data = self.wave_file.readframes(self.chunk)
         global frames
         print(frames)
-        lowertime = 0
-        uppertime = 5
-        self.updatetimecanvas(np.hstack(frames), int(RATE / CHUNK * lowertime), int(RATE / CHUNK * uppertime))
+
+        multiplier = 0
+        self.check_realtime(multiplier)
+        multiplier +=1
         while data != b'' and not self.stopped:
             if not self.paused:
                 start_time = time.time()
@@ -421,13 +427,11 @@ class AudioPlayer:
                 data = self.wave_file.readframes(self.chunk)
                 end_time = time.time()
                 self.timer += end_time - start_time
-                frameschanged = frames[lowertime:uppertime]
 
                 ## Función de tiempo
-                if self.timer >= uppertime:
-                    self.updatetimecanvas(np.hstack(frameschanged), int(RATE / CHUNK * lowertime), int(RATE / CHUNK * uppertime))
-                    lowertime += 5
-                    uppertime += 5
+                if self.timer >= multiplier*PLAY_RANGE:
+                    self.check_realtime(multiplier)
+                    multiplier += 1
 
 
 
