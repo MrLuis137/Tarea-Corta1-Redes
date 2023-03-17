@@ -19,7 +19,7 @@ from matplotlib.backends.backend_tkagg import (
 from matplotlib.backend_bases import key_press_handler
 from matplotlib.figure import Figure
 from zipfile import ZipFile
-from scipy.io.wavfile import write, read
+from scipy.io.wavfile import write
 from os import remove
 import time
 from scipy.fft import rfft
@@ -169,7 +169,7 @@ class Analizador(tk.Frame):
         self.entry.grid(row = 0, column = 1, padx = 10, pady = 10)
 
         self.btn_load = ttk.Button(top_frame, text ="Load",
-                            command = lambda : self.load_wav() )
+                            command = lambda : self.load_wav(self.entry.get()) )
         self.btn_load.grid(row = 1, column = 1, padx = 10, pady = 10)
 
         start_recording_button = ttk.Button(
@@ -212,8 +212,30 @@ class Analizador(tk.Frame):
         self.frame2.grid(row = 6, column = 0, padx = 10, pady = 10)
         self.canvas2.get_tk_widget().grid(row = 7, column = 0, padx = 10, pady = 10)
 
-    def load_wav(file_name):
-        samplerate, data = read(file_name)
+    def load_wav(self, file_name):
+        chunk = 1024  
+        f = wave.open(file_name, 'rb')
+        p = pyaudio.PyAudio()  
+        #open stream  
+        stream = p.open(format = p.get_format_from_width(f.getsampwidth()),  
+                        channels = f.getnchannels(),  
+                        rate = f.getframerate(),  
+                        output = True)  
+        #read data  
+        data = f.readframes(chunk)  
+
+        #play stream  
+        while data:  
+            stream.write(data)  
+            data = f.readframes(chunk)  
+
+        #stop stream  
+        stream.stop_stream()  
+        stream.close()  
+
+        #close PyAudio  
+        p.terminate()  
+
 
     def recordingAudio(self):
         global recording
