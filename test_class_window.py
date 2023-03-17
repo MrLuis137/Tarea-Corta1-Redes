@@ -38,6 +38,7 @@ frames = []
 recording = False
 wavFile= []
 fourier_frames = []
+vec_fourier_frames = []
 
 
     #---ARCHIVOS_ATM-----
@@ -174,7 +175,7 @@ class Analizador(tk.Frame):
         top_frame.grid(row=0, column=0, padx=10, pady=5)
         label.grid(row = 0, column = 0, padx = 10, pady = 10)
          
-        self.fig = Figure(figsize=(5, 3), dpi=100)
+        self.fig = Figure(figsize=(5, 1), dpi=100)
         self.fig.add_subplot(111).plot(frames)
         self.fig2 = Figure(figsize=(5, 3), dpi=100)
         self.fig2.add_subplot(111).hist(fourier_frames, bins=100)
@@ -232,6 +233,8 @@ class Analizador(tk.Frame):
         p = pyaudio.PyAudio()
         global frames
         frames=[]
+        global vec_fourier_frames
+        vec_fourier_frames = []
         #open stream  
         stream = p.open(format = p.get_format_from_width(f.getsampwidth()),  
                         channels = f.getnchannels(),  
@@ -248,9 +251,16 @@ class Analizador(tk.Frame):
             numpydata = np.frombuffer(data, dtype=np.int16)
             frames.append(numpydata)
 
+            # Calcular transformada de Fourier
+            fft_data = np.fft.fft(numpydata)
+            freqs = np.fft.fftfreq(len(numpydata), d=1/RATE)
+            
+            fourier_frames.append(fft_data)  #datos  de la transformada
+            vec_fourier_frames.append(freqs)  #datos de frecuencia de la transformada
+            
             if (i >= int(RATE / CHUNK * RECORD_SECONDS)):
                 self.updatetimecanvas(np.hstack(frames))
-
+                self.updatefouriercanvas(fft_data,freqs)
 
                 i = 0
 
@@ -294,7 +304,9 @@ class Analizador(tk.Frame):
         recording = True
         global fourier_frames
         fourier_frames = []
-        
+        global vec_fourier_frames
+        vec_fourier_frames = []
+    
         i = 0
         while(recording):
 
@@ -302,21 +314,16 @@ class Analizador(tk.Frame):
             numpydata = np.frombuffer(data, dtype=np.int16)
             frames.append(numpydata)
             
-            #Se calcula la transformada de fourier
-            transformada = rfft(numpydata) 
+            # Calcular transformada de Fourier
+            fft_data = np.fft.fft(numpydata)
+            freqs = np.fft.fftfreq(len(numpydata), d=1/RATE)
             
-            # Concatenación de la mitad de la Transformada de Fourier con su reflexión simétrica
-            full_spectrum = np.concatenate((transformada, np.flip(transformada)))
-            
-            #para mostrar ambos lados del espectro
-            shifted_spectrum =  np.fft.fftshift(full_spectrum)
-
-            #se agrega el nuevo calculo a los frames antes calculados
-            fourier_frames.append(np.real(shifted_spectrum))
+            fourier_frames.append(fft_data)  #datos  de la transformada
+            vec_fourier_frames.append(freqs)  #datos de frecuencia de la transformada
             
             if(i>=int(RATE / CHUNK * RECORD_SECONDS)):
                 self.updatetimecanvas(np.hstack(frames))
-                self.updatefouriercanvas(np.hstack(fourier_frames))
+                self.updatefouriercanvas(fft_data,freqs)
                 i=0
 
             i+=1
@@ -355,16 +362,18 @@ class Analizador(tk.Frame):
         self.fig.add_subplot(111).plot(timeframe)  # generate random x/y
         self.canvas.draw_idle()
 
-    def updatefouriercanvas(self,freqframe):
+    def updatefouriercanvas(self,fft_data,freqs):
         self.fig2.clear()
         
         self.ax = self.fig2.add_subplot(111)
-        self.ax.hist(freqframe, bins=350)
+        self.ax.hist(freqs, bins=100, weights=np.abs(fft_data))
         
-        self.ax.set_xlabel('Magnitud')
-        self.ax.set_ylabel('Frecuencia')
+        
+        self.ax.set_xlabel('Frecuencia (Hz)')
+        self.ax.set_ylabel('Conteo') #cantidad de veces que aparece cada frecuencia en el espectro de Fourier
         #ax.set_xlim(-3000, 3000)
         self.canvas2.draw_idle()
+    
     
 class AudioPlayer:
     def __init__(self, wav,figtime, figfreq, canvasTime):
