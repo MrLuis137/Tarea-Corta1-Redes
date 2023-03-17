@@ -19,7 +19,7 @@ from matplotlib.backends.backend_tkagg import (
 from matplotlib.backend_bases import key_press_handler
 from matplotlib.figure import Figure
 from zipfile import ZipFile
-from scipy.io.wavfile import write
+from scipy.io.wavfile import write, read
 from os import remove
 import time
  
@@ -152,7 +152,10 @@ class Analizador(tk.Frame):
         tk.Frame.__init__(self, parent)
          
         # label of frame Layout 2
-        label = ttk.Label(self, text ="Analizador", font = LARGEFONT)
+        
+        top_frame = tk.Frame(self, width=200, height=400, bg='grey')
+        label = ttk.Label(top_frame, text ="Analizador", font = LARGEFONT)
+        top_frame.grid(row=0, column=0, padx=10, pady=5)
         label.grid(row = 0, column = 0, padx = 10, pady = 10)
          
         self.fig = Figure(figsize=(5, 3), dpi=100)
@@ -160,30 +163,37 @@ class Analizador(tk.Frame):
         self.fig2 = Figure(figsize=(5, 3), dpi=100)
         self.fig2.add_subplot(111).plot()
 
+        self.entry = ttk.Entry(top_frame)
+        self.entry.grid(row = 0, column = 1, padx = 10, pady = 10)
+
+        self.btn_load = ttk.Button(top_frame, text ="Load",
+                            command = lambda : self.load_wav() )
+        self.btn_load.grid(row = 1, column = 1, padx = 10, pady = 10)
+
         start_recording_button = ttk.Button(
             #controller,
-            self,
+            top_frame,
             text='Start recording',
             compound=tk.LEFT,
             command=self.start_recording_thread
         )
-        start_recording_button.grid(row = 0, column = 1, padx = 10, pady = 10)
+        start_recording_button.grid(row = 0, column = 2, padx = 10, pady = 10)
 
         stop_recording_button = ttk.Button(
-            self,
+            top_frame,
             text='Stop recording',
             compound=tk.LEFT,
             command=self.recordingAudio
         )
-        stop_recording_button.grid(row = 1, column = 1, padx = 10, pady = 10)
+        stop_recording_button.grid(row = 0, column = 3, padx = 10, pady = 10)
 
         open_audio_button = ttk.Button(
-            self,
+            top_frame,
             text='Open audio',
             compound=tk.LEFT,
             command=self.recordingAudio
         )
-        open_audio_button.grid(row = 2, column = 1, padx = 10, pady = 10)
+        open_audio_button.grid(row = 0, column = 4, padx = 10, pady = 10)
 
 
         self.frame1 = tk.Frame(self)
@@ -195,11 +205,13 @@ class Analizador(tk.Frame):
         self.toolbar2 = NavigationToolbar2Tk(self.canvas2, self.frame2)
 
 
-        self.frame1.grid(row = 4, column = 1, padx = 10, pady = 10)
-        self.canvas.get_tk_widget().grid(row = 5, column = 1, padx = 10, pady = 10)
-        self.frame2.grid(row = 6, column = 1, padx = 10, pady = 10)
-        self.canvas2.get_tk_widget().grid(row = 7, column = 1, padx = 10, pady = 10)
+        self.frame1.grid(row = 4, column = 0, padx = 10, pady = 10)
+        self.canvas.get_tk_widget().grid(row = 5, column = 0, padx = 10, pady = 10)
+        self.frame2.grid(row = 6, column = 0, padx = 10, pady = 10)
+        self.canvas2.get_tk_widget().grid(row = 7, column = 0, padx = 10, pady = 10)
 
+    def load_wav(file_name):
+        samplerate, data = read(file_name)
 
     def recordingAudio(self):
         global recording
