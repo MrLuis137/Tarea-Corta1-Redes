@@ -34,6 +34,7 @@ WAVE_OUTPUT_FILENAME = "output.wav"
 p = pyaudio.PyAudio()
 frames = []
 recording = False
+wavFile= []
 
 
     #---ARCHIVOS_ATM-----
