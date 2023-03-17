@@ -21,6 +21,7 @@ from matplotlib.figure import Figure
 from zipfile import ZipFile
 from scipy.io.wavfile import write
 from os import remove
+import time
  
 LARGEFONT =("Verdana", 35)
 CHUNK = 1024
@@ -33,6 +34,45 @@ WAVE_OUTPUT_FILENAME = "output.wav"
 p = pyaudio.PyAudio()
 frames = []
 recording = False
+
+
+    #---ARCHIVOS_ATM-----
+
+   #---ARCHIVOS_ATM-----
+
+def to_atm(chunksList, wavFilePath):
+    file = open("chunks", "w+")
+    content = str(chunksList)
+    file.write(content)
+    file.close
+    with ZipFile('file.atm', 'w') as zip:
+         zip.write('chunks')
+         zip.write(wavFilePath)
+    try:
+        os.remove("./chunks")
+    except:
+        print("File already deleted")
+
+def from_atm(filepath):
+    with ZipFile(filepath) as zip:
+        files = zip.namelist();
+        print(files)
+        for i in range(0,len(files)):
+            if(files[i] == WAVE_OUTPUT_FILENAME):
+                global wavFile
+                zip.extract(files[i])
+                wavFile = open_wav_file(files[i])
+            elif(files[i] == WAVE_OUTPUT_FILENAME):
+                global frames
+                frames = zip.read(files[i]);
+            
+            print(zip.read(files[i]))
+
+#---ARCHIVOS_ATM-----
+
+def open_wav_file(file):
+    #en progreso
+    return wave.open(file, 'rb')
 
 
 class Autrumn(tk.Tk):
@@ -158,37 +198,6 @@ class Analizador(tk.Frame):
         self.canvas2.get_tk_widget().pack(side=tk.TOP, fill=tk.X)
 
 
-    #---ARCHIVOS_ATM-----
-
-    def to_atm(self, chunksList, wavFilePath):
-        file = open("chunks", "w+")
-        content = str(chunksList)
-        file.write(content)
-        file.close
-        with ZipFile('file.atm', 'w') as zip:
-            zip.write('chunks')
-            zip.write(wavFilePath)
-        try:
-            os.remove("./chunks")
-        except:
-            print("File already deleted")
-
-    def from_atm(self, filepath):
-        with ZipFile(filepath, 'w') as zip:
-            files = zip.namelist();
-            for i in range(0,len(files)):
-                if(files[i] == WAVE_OUTPUT_FILENAME):
-                    self.open_wav_file(zip.read(files[i]))
-                elif(files[i] == WAVE_OUTPUT_FILENAME):
-                    frames = zip.read(files[i]);
-                
-                print(zip.read(files[i]))
-
-    #---ARCHIVOS_ATM-----
-
-    def open_wav_file(self, file):
-        #en progreso
-        wf = wave.open(file, 'rb')
 
     def recordingAudio(self):
         global recording
@@ -274,3 +283,71 @@ class Reproductor(tk.Frame):
 # Driver Code
 autrumn = Autrumn()
 autrumn.mainloop()
+
+
+  
+  
+class AudioPlayer:
+    def __init__(self, wav):
+        self.filename = "test"
+        self.chunk = 1024
+        self.paused = False
+        self.stopped = False
+        self.wave_file = wav
+        self.p = 0
+        self.stream = 0
+    def load(self):
+        #self.wave_file = wave.open(self.filename, 'rb')
+        self.p = pyaudio.PyAudio()
+        self.stream = self.p.open(
+            format=self.p.get_format_from_width(self.wave_file.getsampwidth()),
+            channels=self.wave_file.getnchannels(),
+            rate=self.wave_file.getframerate(),
+            output=True
+        )
+    
+    def play(self):
+        data = self.wave_file.readframes(self.chunk)
+        while data != b'' and not self.stopped:
+            if not self.paused:
+                self.stream.write(data)
+                data = self.wave_file.readframes(self.chunk)
+            else:
+                time.sleep(0.1)
+        self.stop()
+    
+    def pause(self):
+        self.paused = True
+    
+    def resume(self):
+        self.paused = False
+    
+    def stop(self):
+        self.stopped = True
+        self.paused = False
+        self.stream.stop_stream()
+        self.stream.close()
+        self.p.terminate()
+        self.wave_file.close()
+        
+
+
+
+player = AudioPlayer(wavFile)
+
+print("start")
+player.load()
+time.sleep(5)
+
+print("play")
+hilo = threading.Thread(target=player.play)
+hilo.start()
+print("pause")
+time.sleep(5)
+player.pause() 
+print("resume")
+time.sleep(5)
+player.resume() 
+print("stop")    
+time.sleep(5)
+player.stop()
