@@ -22,6 +22,7 @@ from zipfile import ZipFile
 from scipy.io.wavfile import write, read
 from os import remove
 import time
+from scipy.fft import rfft
  
 LARGEFONT =("Verdana", 15)
 CHUNK = 1024
@@ -35,6 +36,7 @@ p = pyaudio.PyAudio()
 frames = []
 recording = False
 wavFile= []
+fourier_frames = []
 
 
     #---ARCHIVOS_ATM-----
@@ -161,8 +163,8 @@ class Analizador(tk.Frame):
         self.fig = Figure(figsize=(5, 3), dpi=100)
         self.fig.add_subplot(111).plot(frames)
         self.fig2 = Figure(figsize=(5, 3), dpi=100)
-        self.fig2.add_subplot(111).plot()
-
+        self.fig2.add_subplot(111).hist(fourier_frames, bins=100)
+        self.ax= 0
         self.entry = ttk.Entry(top_frame)
         self.entry.grid(row = 0, column = 1, padx = 10, pady = 10)
 
@@ -230,14 +232,31 @@ class Analizador(tk.Frame):
         global frames
         frames = []
         recording = True
+        global fourier_frames
+        fourier_frames = []
+        
         i = 0
         while(recording):
 
             data = stream.read(CHUNK)
             numpydata = np.frombuffer(data, dtype=np.int16)
             frames.append(numpydata)
+            
+            #Se calcula la transformada de fourier
+            transformada = rfft(numpydata) 
+            
+            # Concatenación de la mitad de la Transformada de Fourier con su reflexión simétrica
+            full_spectrum = np.concatenate((transformada, np.flip(transformada)))
+            
+            #para mostrar ambos lados del espectro
+            shifted_spectrum =  np.fft.fftshift(full_spectrum)
+
+            #se agrega el nuevo calculo a los frames antes calculados
+            fourier_frames.append(np.real(shifted_spectrum))
+            
             if(i>=int(RATE / CHUNK * RECORD_SECONDS)):
                 self.updatetimecanvas(np.hstack(frames))
+                self.updatefouriercanvas(np.hstack(fourier_frames))
                 i=0
 
             i+=1
@@ -270,7 +289,17 @@ class Analizador(tk.Frame):
         self.fig.add_subplot(111).plot(timeframe)  # generate random x/y
         self.canvas.draw_idle()
 
- 
+    def updatefouriercanvas(self,freqframe):
+        self.fig2.clear()
+        
+        self.ax = self.fig2.add_subplot(111)
+        self.ax.hist(freqframe, bins=350)
+        
+        self.ax.set_xlabel('Magnitud')
+        self.ax.set_ylabel('Frecuencia')
+        #ax.set_xlim(-3000, 3000)
+        self.canvas2.draw_idle()
+    
 class AudioPlayer:
     def __init__(self, wav):
         self.filename = "test"
