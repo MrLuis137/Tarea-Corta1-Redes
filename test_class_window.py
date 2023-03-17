@@ -183,7 +183,7 @@ class Analizador(tk.Frame):
         self.entry.grid(row = 0, column = 1, padx = 10, pady = 10)
 
         self.btn_load = ttk.Button(top_frame, text ="Load",
-                            command = lambda : self.load_wav(self.entry.get()) )
+                            command = self.start_loading_thread )
         self.btn_load.grid(row = 1, column = 1, padx = 10, pady = 10)
 
         start_recording_button = ttk.Button(
@@ -226,10 +226,12 @@ class Analizador(tk.Frame):
         self.frame2.grid(row = 6, column = 0, padx = 10, pady = 10)
         self.canvas2.get_tk_widget().grid(row = 7, column = 0, padx = 10, pady = 10)
 
-    def load_wav(self, file_name):
+    def load_wav(self):
         chunk = 1024  
-        f = wave.open(file_name, 'rb')
-        p = pyaudio.PyAudio()  
+        f = wave.open(self.entry.get(), 'rb')
+        p = pyaudio.PyAudio()
+        global frames
+        frames=[]
         #open stream  
         stream = p.open(format = p.get_format_from_width(f.getsampwidth()),  
                         channels = f.getnchannels(),  
@@ -237,18 +239,40 @@ class Analizador(tk.Frame):
                         output = True)  
         #read data  
         data = f.readframes(chunk)  
-
+        i=0
         #play stream  
         while data:  
             stream.write(data)  
-            data = f.readframes(chunk)  
+            data = f.readframes(chunk)
+
+            numpydata = np.frombuffer(data, dtype=np.int16)
+            frames.append(numpydata)
+
+            if (i >= int(RATE / CHUNK * RECORD_SECONDS)):
+                self.updatetimecanvas(np.hstack(frames))
+
+
+                i = 0
+
+            i += 1
+
+        numpyarrayfinal = np.hstack(frames)
+        self.updatetimecanvas(numpyarrayfinal)
 
         #stop stream  
         stream.stop_stream()  
         stream.close()  
 
         #close PyAudio  
-        p.terminate()  
+        p.terminate()
+
+        wf = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
+        wf.setnchannels(CHANNELS)
+        wf.setsampwidth(p.get_sample_size(FORMAT))
+        wf.setframerate(RATE)
+        wf.writeframes(b''.join(frames))
+        wf.close()
+        ##to_atm(frames, WAVE_OUTPUT_FILENAME)
 
 
     def recordingAudio(self):
@@ -320,6 +344,11 @@ class Analizador(tk.Frame):
     def start_recording_thread(self):
         x = threading.Thread(target=self.startRecording)
         x.start()
+
+    def start_loading_thread(self):
+        x = threading.Thread(target=self.load_wav)
+        x.start()
+
 
     def updatetimecanvas(self, timeframe):
         self.fig.clear()
