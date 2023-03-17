@@ -46,6 +46,7 @@ def to_atm(chunksList, wavFilePath):
     content = str(chunksList)
     file.write(content)
     file.close
+    global frames
     with ZipFile('file.atm', 'w') as zip:
          zip.write('chunks')
          zip.write(wavFilePath)
@@ -62,9 +63,10 @@ def from_atm(filepath):
                 global wavFile
                 zip.extract(files[i])
                 wavFile = open_wav_file(files[i])
-            elif(files[i] == WAVE_OUTPUT_FILENAME):
+            elif(files[i] == "chunks"):
                 global frames
                 frames = zip.read(files[i])
+               
             
 
 #---ARCHIVOS_ATM-----
@@ -199,36 +201,6 @@ class Analizador(tk.Frame):
         self.canvas2.get_tk_widget().grid(row = 7, column = 1, padx = 10, pady = 10)
 
 
-    #---ARCHIVOS_ATM-----
-
-    def to_atm(self, chunksList, wavFilePath):
-        file = open("chunks", "w+")
-        content = str(chunksList)
-        file.write(content)
-        file.close
-        with ZipFile('file.atm', 'w') as zip:
-            zip.write('chunks')
-            zip.write(wavFilePath)
-        try:
-            os.remove("./chunks")
-        except:
-            print("File already deleted")
-
-    def from_atm(self, filepath):
-        with ZipFile(filepath, 'w') as zip:
-            files = zip.namelist();
-            for i in range(0,len(files)):
-                if(files[i] == WAVE_OUTPUT_FILENAME):
-                    self.open_wav_file(zip.read(files[i]))
-                elif(files[i] == WAVE_OUTPUT_FILENAME):
-                    frames = zip.read(files[i]);
-
-    #---ARCHIVOS_ATM-----
-
-    def open_wav_file(self, file):
-        #en progreso
-        wf = wave.open(file, 'rb')
-
     def recordingAudio(self):
         global recording
         recording = False
@@ -271,7 +243,7 @@ class Analizador(tk.Frame):
         wf.setframerate(RATE)
         wf.writeframes(b''.join(frames))
         wf.close()
-        self.to_atm(frames, WAVE_OUTPUT_FILENAME)
+        to_atm(frames, WAVE_OUTPUT_FILENAME)
 
 
 
@@ -296,6 +268,8 @@ class AudioPlayer:
         self.wave_file = wav
         self.p = 0
         self.stream = 0
+        self.time = 0
+
     def load(self):
         #self.wave_file = wave.open(self.filename, 'rb')
         self.p = pyaudio.PyAudio()
@@ -310,14 +284,18 @@ class AudioPlayer:
         data = self.wave_file.readframes(self.chunk)
         while data != b'' and not self.stopped:
             if not self.paused:
+                start_time = time.time()
                 self.stream.write(data)
                 data = self.wave_file.readframes(self.chunk)
+                end_time = time.time()
+                self.time += end_time - start_time
             else:
                 time.sleep(0.1)
         self.stop()
     
     def pause(self):
         self.paused = True
+        print(self.time)
     
     def resume(self):
         self.paused = False
@@ -382,7 +360,8 @@ class Reproductor(tk.Frame):
     
     def stop(self):
         self.player.stop()
-
+        
+    
 
 # Driver Code
 autrumn = Autrumn()
