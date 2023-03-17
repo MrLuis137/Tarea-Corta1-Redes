@@ -326,9 +326,10 @@ class AudioPlayer:
         self.stopped = True
         self.paused = False
         self.stream.stop_stream()
-        self.stream.close()
-        self.p.terminate()
-        self.wave_file.close()
+        #self.stream.close()
+        #self.p.terminate()
+        #self.wave_file.close()
+        pass
 
 # second window frame page1
 class Reproductor(tk.Frame):
@@ -368,6 +369,7 @@ class Reproductor(tk.Frame):
         global wavFile
         self.player = AudioPlayer(wavFile)
         self.player.load()
+
     def play(self):
         hilo = threading.Thread(target=self.player.play)
         hilo.start()
