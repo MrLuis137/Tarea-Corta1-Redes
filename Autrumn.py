@@ -180,7 +180,7 @@ window.title("Autrumn")
 fig = Figure(figsize=(5, 3), dpi=100)
 fig.add_subplot(111).plot(frames)
 fig2 = Figure(figsize=(5, 3), dpi=100)
-fig2.add_subplot(111).hist(fourier_frames, bins=100)
+fig2.add_subplot(111).hist(fourier_frames, bins=100, range=(0, 1), log=True)
 
 frame1 = tk.Frame(window)
 frame2 = tk.Frame(window)
@@ -206,7 +206,7 @@ def updatetimecanvas(timeframe):
 def updatefouriercanvas(freqframe):
     fig2.clear()
     ax = fig2.add_subplot(111)
-    ax.hist(freqframe, bins=100)
+    ax.hist(freqframe, bins=100, range=(0, 1), log=True)
     ax.set_xlabel('Magnitud')
     ax.set_ylabel('Frecuencia')
     canvas2.draw_idle()
