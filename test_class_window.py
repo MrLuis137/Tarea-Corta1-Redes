@@ -5,6 +5,7 @@
 # https://www.pythontutorial.net/tkinter/tkinter-menu/
 # https://www.tutorialsteacher.com/python/create-gui-using-tkinter-python
 
+from io import BytesIO
 import tkinter as tk
 from tkinter import ttk  
 from tkinter import Menu
@@ -42,14 +43,16 @@ wavFile= []
    #---ARCHIVOS_ATM-----
 
 def to_atm(chunksList, wavFilePath):
-    file = open("chunks", "w+")
-    content = str(chunksList)
+  
+    file = open("chunks", "wb")
+    content = array_to_bytes(chunksList)
     file.write(content)
     file.close
     global frames
     with ZipFile('file.atm', 'w') as zip:
          zip.write('chunks')
          zip.write(wavFilePath)
+         print(chunksList)
     try:
         os.remove("./chunks")
     except:
@@ -65,8 +68,19 @@ def from_atm(filepath):
                 wavFile = open_wav_file(files[i])
             elif(files[i] == "chunks"):
                 global frames
-                frames = zip.read(files[i])
+                frames = bytes_to_array(zip.read(files[i]))
+                print(type(frames))
+                print(frames)
                
+def array_to_bytes(x: np.ndarray) -> bytes:
+    np_bytes = BytesIO()
+    np.save(np_bytes, x, allow_pickle=True)
+    return np_bytes.getvalue()
+
+
+def bytes_to_array(b: bytes) -> np.ndarray:
+    np_bytes = BytesIO(b)
+    return np.load(np_bytes, allow_pickle=True)
             
 
 #---ARCHIVOS_ATM-----
