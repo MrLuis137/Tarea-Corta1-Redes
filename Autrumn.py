@@ -13,8 +13,7 @@ from matplotlib.figure import Figure
 from zipfile import ZipFile
 from scipy.io.wavfile import write
 from os import remove
-from scipy.fft import fft, fftfreq, fftshift
-
+from scipy.fft import rfft, fftfreq, fftshift, irfft
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
@@ -54,7 +53,7 @@ def to_atm(chunksList, wavFilePath):
 
 def from_atm(filepath):
     with ZipFile(filepath) as zip:
-        files = zip.namelist();
+        files = zip.namelist()
        # print(files)
         for i in range(0,len(files)):
             if(files[i] == WAVE_OUTPUT_FILENAME):
@@ -65,7 +64,7 @@ def from_atm(filepath):
                 print(wavFile)
             elif(files[i] == WAVE_OUTPUT_FILENAME):
                 global frames
-                frames = zip.read(files[i]);
+                frames = zip.read(files[i])
             
             #print(zip.read(files[i]))
 
@@ -105,36 +104,26 @@ def startRecording():
         frames.append(numpydata)
         
         #Se calcula la transformada de fourier
-        transformada = fft(numpydata) 
+        transformada = rfft(numpydata) 
+         
+        # Concatenación de la mitad de la Transformada de Fourier con su reflexión simétrica
+        full_spectrum = np.concatenate((transformada, np.flip(transformada)))
         
-        #Se calcula la magnitud de la transformada de FOurier y se normaliza
-        fft_mag = np.abs(transformada)
-        fft_mag = fft_mag / np.max(fft_mag)
+        #para mostrar ambos lados del espectro
         
+        shifted_spectrum =  np.fft.fftshift(full_spectrum)
+
         
         #se agrega el nuevo calculo a los frames antes calculados
-        fourier_frames.append(fft_mag)
+        fourier_frames.append(np.real(shifted_spectrum))
         
         
-        #lenght=len(numpydata)
-        #vec_frec = fftfreq(N, T)[:N//2]  #vector de frecuencia correspondiente a los coeficientes de la trasnformada de fourier
-        #vec_fourier_frames.append(vec_frec) 
-        #fourier_frames.append(transformada)
-
-        #print("tiemp-> ",numpydata)
-        #print("freq-> ",transformada)
-        
-        #Se reorganiza el espectro de frecuencias utilizando la funcion ffshift de spicy
-        '''vec_frec=fftshift(vec_frec)
-        transformada_plot=fftshift(transformada)
-        vec_fourier_frames.append(vec_frec) 
-        fourier_frames.append(transformada_plot)'''
- 
+       
         
         if(i>=int(RATE / CHUNK * RECORD_SECONDS)):
             updatetimecanvas(np.hstack(frames))
             updatefouriercanvas(np.hstack(fourier_frames))
-            #updatefreqcanvas( transformada_plot,vec_frec)
+            
             i=0
 
         i+=1
@@ -180,7 +169,7 @@ window.title("Autrumn")
 fig = Figure(figsize=(5, 3), dpi=100)
 fig.add_subplot(111).plot(frames)
 fig2 = Figure(figsize=(5, 3), dpi=100)
-fig2.add_subplot(111).hist(fourier_frames, bins=100, range=(0, 1), log=True)
+fig2.add_subplot(111).hist(fourier_frames, bins=100)
 
 frame1 = tk.Frame(window)
 frame2 = tk.Frame(window)
@@ -205,21 +194,17 @@ def updatetimecanvas(timeframe):
 
 def updatefouriercanvas(freqframe):
     fig2.clear()
+    
     ax = fig2.add_subplot(111)
-    ax.hist(freqframe, bins=100, range=(0, 1), log=True)
+    ax.hist(freqframe, bins=350)
+    
+     
     ax.set_xlabel('Magnitud')
     ax.set_ylabel('Frecuencia')
+    #ax.set_xlim(-3000, 3000)
     canvas2.draw_idle()
     
-'''
-def updatefreqcanvas(fourierframe, freq_frame):
-    fig2.clear()
-    ax = fig2.add_subplot(111)
-    ax.plot(freq_frame, 2.0/N * np.abs(fourierframe[0:N//2]))
-    ax.set_xlabel('Frecuencia (Hz)')
-    ax.set_ylabel('Amplitud')
-    canvas2.draw_idle()
-'''
+
 frame1.pack(side=tk.TOP, fill=tk.X)
 canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.X)
 frame2.pack(side=tk.TOP, fill=tk.X)

@@ -39,7 +39,7 @@ yplot = fftshift(yf)
 import matplotlib.pyplot as plt
 plt.plot(xf, 1.0/N * np.abs(yplot))
 plt.grid()
-plt.show() '''
+plt.show() 
 
 from scipy.io import wavfile
 from scipy.fft import fft
@@ -62,4 +62,28 @@ fft_mag = fft_mag / np.max(fft_mag)
 plt.hist(fft_mag, bins=100)
 plt.xlabel("Magnitud")
 plt.ylabel("Número de ocurrencias")
+plt.show()
+'''
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Señal de ejemplo
+x = np.linspace(0, 11, 1000)
+y = np.sin(2*np.pi*5*x) + np.sin(2*np.pi*10*x)
+
+# Cálculo de la Transformada de Fourier
+fft_data = np.fft.rfft(y)
+
+# Concatenación de la mitad de la Transformada de Fourier con su reflexión simétrica
+full_spectrum = np.concatenate((fft_data, np.flip(fft_data)))
+
+# Cálculo de la magnitud de la Transformada de Fourier
+magnitude = np.abs(full_spectrum)
+
+# Desplazamiento del espectro para que los datos en ambos lados estén en espejo
+shifted_spectrum = np.fft.fftshift(magnitude)
+
+# Gráfico del histograma
+plt.hist(shifted_spectrum)
 plt.show()
