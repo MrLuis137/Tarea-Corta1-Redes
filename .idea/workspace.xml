@@ -5,6 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="eaf1f567-d01a-482f-b859-ecf24228f041" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/chunks" beforeDir="false" afterPath="$PROJECT_DIR$/chunks" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/file.atm" beforeDir="false" afterPath="$PROJECT_DIR$/file.atm" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/output.wav" beforeDir="false" afterPath="$PROJECT_DIR$/output.wav" afterDir="false" />
