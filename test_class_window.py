@@ -59,7 +59,7 @@ def to_atm(chunksList, wavFilePath):
          zip.write(wavFilePath)
          print(chunksList)
     try:
-        os.remove("./chunks")
+        os.remove("chunks")
     except:
         print("File already deleted")
 
@@ -78,13 +78,13 @@ def from_atm(filepath):
                 print(type(frames))
                 print(frames)
                
-def array_to_bytes(x: np.ndarray) -> bytes:
+def array_to_bytes(x):
     np_bytes = BytesIO()
     np.save(np_bytes, x, allow_pickle=True)
     return np_bytes.getvalue()
 
 
-def bytes_to_array(b: bytes) -> np.ndarray:
+def bytes_to_array(b):
     np_bytes = BytesIO(b)
     return np.load(np_bytes, allow_pickle=True)
             
@@ -240,15 +240,15 @@ class Analizador(tk.Frame):
         frames=[]
         global vec_fourier_frames
         vec_fourier_frames = []
-        #open stream  
+        #Abre stream de pyaudio
         stream = p.open(format = p.get_format_from_width(f.getsampwidth()),  
                         channels = f.getnchannels(),  
                         rate = f.getframerate(),  
                         output = True)  
-        #read data  
+        #Lee los chunks del wav y los almacena en data
         data = f.readframes(chunk)  
         i=0
-        #play stream  
+        #Abre un ciclo para cada elemento en data
         while data:  
             stream.write(data)  
             data = f.readframes(chunk)
@@ -262,9 +262,11 @@ class Analizador(tk.Frame):
             
             fourier_frames.append(fft_data)  #datos  de la transformada
             vec_fourier_frames.append(freqs)  #datos de frecuencia de la transformada
-            
+
+            #calcula si han pasado RECORD_SECONDS segundos antes de graficar de nuevo
+            #formula recuperada de https://stackoverflow.com/questions/35344649/reading-input-sound-signal-using-python
             if (i >= int(RATE / CHUNK * RECORD_SECONDS)):
-                self.updatetimecanvas(np.hstack(frames))
+                self.updatetimecanvas(np.hstack(frames)) #llama a actualizar el canvas
                 self.updatefouriercanvas(fft_data,freqs)
 
                 i = 0
@@ -274,13 +276,14 @@ class Analizador(tk.Frame):
         numpyarrayfinal = np.hstack(frames)
         self.updatetimecanvas(numpyarrayfinal)
 
-        #stop stream  
+        #cierra el stream de datos
         stream.stop_stream()  
         stream.close()  
 
-        #close PyAudio  
+        #cierra pyaudio
         p.terminate()
 
+        #guarda un wav como output.wav
         wf = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
         wf.setnchannels(CHANNELS)
         wf.setsampwidth(p.get_sample_size(FORMAT))
@@ -296,6 +299,11 @@ class Analizador(tk.Frame):
         
     def startRecording(self):
         global recording
+        # abre el stream de pyAudio
+        # Channels abre para surround o mono, este proyecto se hace con mono
+        # Rate da el samplerate del canal
+        # input abre el micrófono
+        # frames per buffer muestre cuántos frames se graban a la vez.
         stream = p.open(format=FORMAT,
                         channels=CHANNELS,
                         rate=RATE,
@@ -313,8 +321,9 @@ class Analizador(tk.Frame):
         vec_fourier_frames = []
     
         i = 0
-        while(recording):
 
+        #Ciclo continúa hasta que a nivel global se indique que ya no está grabando
+        while(recording):
             data = stream.read(CHUNK)
             numpydata = np.frombuffer(data, dtype=np.int16)
             frames.append(numpydata)
@@ -325,28 +334,34 @@ class Analizador(tk.Frame):
             
             fourier_frames.append(fft_data)  #datos  de la transformada
             vec_fourier_frames.append(freqs)  #datos de frecuencia de la transformada
-            
+
+            #Cada ciertos segundos RECORD_SECONDS se entra al ciclo para actualizar el gráfico
+            #En este caso se escogen 2 segundos
+            #como esto es por ciclo, este se calcula con la formula Rate/chunk * 2
+            # Este número se compara con el número de iteraciones que debe tener en i
             if(i>=int(RATE / CHUNK * RECORD_SECONDS)):
-                self.updatetimecanvas(np.hstack(frames))
+                self.updatetimecanvas(np.hstack(frames)) #hstack vuelve el array de frames unidimensional
                 self.updatefouriercanvas(fft_data,freqs)
                 i=0
 
             i+=1
 
         numpyarrayfinal = np.hstack(frames)
-        self.updatetimecanvas(numpyarrayfinal)
+        self.updatetimecanvas(numpyarrayfinal) #última actualización
 
+        #Cierra el input de datos del micrófono
         stream.stop_stream()
         stream.close()
         p.terminate()
 
+        #crea un wav con el ncon el nombre output.wav
+        #toda la información se guarda en
         wf = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
         wf.setnchannels(CHANNELS)
         wf.setsampwidth(p.get_sample_size(FORMAT))
         wf.setframerate(RATE)
         wf.writeframes(b''.join(frames))
         wf.close()
-        print(numpyarrayfinal)
         to_atm(frames, WAVE_OUTPUT_FILENAME)
 
 
@@ -364,7 +379,7 @@ class Analizador(tk.Frame):
 
     def updatetimecanvas(self, timeframe):
         self.fig.clear()
-        self.fig.add_subplot(111).plot(timeframe)  # generate random x/y
+        self.fig.add_subplot(111).plot(timeframe)  # Refrezca el plot con los frames actuales
         self.canvas.draw_idle()
 
     def updatefouriercanvas(self,fft_data,freqs):
@@ -399,7 +414,7 @@ class AudioPlayer:
     def updatetimecanvas(self, timeframe):
 
 
-        self.fig.clear()
+        self.fig.clear() #limpia el gráfico actual
         self.fig.add_subplot(111).plot(timeframe)  # Genera un plot con los valores especificado
         self.canvas.draw_idle()
         
@@ -418,6 +433,7 @@ class AudioPlayer:
     
     def check_realtime(self, multiplier):
         global frames
+<<<<<<< HEAD
         global fourier_frames
         global vec_fourier_frames
         
@@ -433,6 +449,14 @@ class AudioPlayer:
         print("fourier-> ", fourier_frames.shape)
         print("vec-> ", vec_fourier_frames.shape)
         
+=======
+        #se busca que no grafique más allá del total de frames
+        # si el próximo rango de graficación excede el largo del frame, utiliza el largo del frame como límite superior
+        # Para encontrar una medición exacta de los 5 segundos a lo largo de frames, se calculó que hay 43 frames por segundo
+        # Estos 43 se multiplica por un PLAY_RANGE que sería de 5 para 5 segundos
+        # Para encontrar el punto actual se multiplica por el multiplicador actual para buscar el frame 10, 15, etc
+        # Para el límite superior, se le suma 1 al multiplicador para que de el siguiente punto
+>>>>>>> master
         if (43 * (multiplier + 1) * PLAY_RANGE <= len(frames)):
             self.updatetimecanvas(np.hstack(frames[43*multiplier*PLAY_RANGE:43 * (multiplier + 1) * PLAY_RANGE]))
             self.updatefouriercanvas(fourier_frames[43*multiplier*PLAY_RANGE:43 * (multiplier + 1) * PLAY_RANGE],vec_fourier_frames[43*multiplier*PLAY_RANGE:43 * (multiplier + 1) * PLAY_RANGE])
@@ -472,9 +496,9 @@ class AudioPlayer:
                 self.timer += end_time - start_time
 
                 ## Función de tiempo
-                if self.timer >= multiplier*PLAY_RANGE:
+                if self.timer >= multiplier*PLAY_RANGE: #si el tiempo ya es mayor que el multiplicador por el rango de segundos
                     self.check_realtime(multiplier)
-                    multiplier += 1
+                    multiplier += 1 #aumentar el multiplicador en 1.
 
 
 
