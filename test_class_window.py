@@ -74,6 +74,7 @@ def from_atm(filepath):
             elif(files[i] == "chunks"):
                 global frames
                 frames = bytes_to_array(zip.read(files[i]))
+                
                 print(type(frames))
                 print(frames)
                
@@ -367,6 +368,7 @@ class Analizador(tk.Frame):
         self.canvas.draw_idle()
 
     def updatefouriercanvas(self,fft_data,freqs):
+        
         self.fig2.clear()
         
         self.ax = self.fig2.add_subplot(111)
@@ -380,7 +382,7 @@ class Analizador(tk.Frame):
     
     
 class AudioPlayer:
-    def __init__(self, wav,figtime, figfreq, canvasTime):
+    def __init__(self, wav,figtime, figfreq, canvasTime,canvasFreq):
         self.filename = "test"
         self.chunk = 1024
         self.paused = False
@@ -392,6 +394,7 @@ class AudioPlayer:
         self.fig =figtime
         self.fig2 = figfreq
         self.canvas = canvasTime
+        self.canvas2 = canvasFreq
 
     def updatetimecanvas(self, timeframe):
 
@@ -399,12 +402,49 @@ class AudioPlayer:
         self.fig.clear()
         self.fig.add_subplot(111).plot(timeframe)  # Genera un plot con los valores especificado
         self.canvas.draw_idle()
+        
+    def updatefouriercanvas(self,fft_data,freqs):
+        self.fig2.clear()
+        
+        self.ax = self.fig2.add_subplot(111)
+        self.ax.hist(freqs, bins=100, weights=np.abs(fft_data))
+        
+        
+        self.ax.set_xlabel('Frecuencia (Hz)')
+        self.ax.set_ylabel('Conteo') #cantidad de veces que aparece cada frecuencia en el espectro de Fourier
+        #ax.set_xlim(-3000, 3000)
+        self.canvas2.draw_idle()
+    
+    
     def check_realtime(self, multiplier):
         global frames
+        global fourier_frames
+        global vec_fourier_frames
+        
+        # Calcular transformada de Fourier
+        fourier_frames = np.fft.fft(frames)
+        vec_fourier_frames = np.fft.fftfreq(len(frames), d=1/RATE)
+        
+        print("fourier-> ", fourier_frames[0])
+        print("vec-> ", fourier_frames[1])
+        
+        fourier_frames = fourier_frames[:, 0]
+        
+        print("fourier-> ", fourier_frames.shape)
+        print("vec-> ", vec_fourier_frames.shape)
+        
         if (43 * (multiplier + 1) * PLAY_RANGE <= len(frames)):
             self.updatetimecanvas(np.hstack(frames[43*multiplier*PLAY_RANGE:43 * (multiplier + 1) * PLAY_RANGE]))
+            self.updatefouriercanvas(fourier_frames[43*multiplier*PLAY_RANGE:43 * (multiplier + 1) * PLAY_RANGE],vec_fourier_frames[43*multiplier*PLAY_RANGE:43 * (multiplier + 1) * PLAY_RANGE])
+            
+            
+            
         else:
             self.updatetimecanvas(np.hstack(frames[43 * multiplier * PLAY_RANGE:len(frames)-1]))
+            self.updatefouriercanvas(fourier_frames[43 * multiplier * PLAY_RANGE:len(frames)-1],vec_fourier_frames[43 * multiplier * PLAY_RANGE:len(frames)-1])
+            
+            
+            
     def load(self):
         #self.wave_file = wave.open(self.filename, 'rb')
         self.p = pyaudio.PyAudio()
@@ -461,7 +501,7 @@ class AudioPlayer:
 
 # second window frame page1
 class Reproductor(tk.Frame):
-    player = AudioPlayer(wavFile,0,0,0)
+    player = AudioPlayer(wavFile,0,0,0,0)
     playing = False
     def __init__(self, parent, controller):
          
@@ -492,10 +532,10 @@ class Reproductor(tk.Frame):
         self.btn_stop.grid(row = 0, column = 4, padx = 10, pady = 10)
 
 
-        self.fig = Figure(figsize=(5, 3), dpi=100)
+        self.fig = Figure(figsize=(5, 1), dpi=100)
         self.fig.add_subplot(111).plot(frames)
         self.fig2 = Figure(figsize=(5, 3), dpi=100)
-        self.fig2.add_subplot(111).plot()
+        self.fig2.add_subplot(111).hist(vec_fourier_frames, bins=100, weights=np.abs(fourier_frames))
 
 
 
@@ -520,7 +560,7 @@ class Reproductor(tk.Frame):
         path = ""
         from_atm(self.entry.get())
         global wavFile
-        self.player = AudioPlayer(wavFile, self.fig, self.fig2, self.canvas)
+        self.player = AudioPlayer(wavFile, self.fig, self.fig2, self.canvas, self.canvas2)
         self.player.load()
 
     def play(self):

@@ -14,6 +14,7 @@ from zipfile import ZipFile
 from scipy.io.wavfile import write
 from os import remove
 from scipy.fft import rfft, fftfreq, fftshift, irfft
+import time
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
@@ -94,7 +95,7 @@ def startRecording():
     global fourier_frames
     fourier_frames = []
     global vec_fourier_frames
-    vec_fourier_frames = []= []
+    vec_fourier_frames = []
     
     i = 0
     while(recording):
@@ -104,7 +105,7 @@ def startRecording():
         frames.append(numpydata)
         
         #Se calcula la transformada de fourier
-        transformada = rfft(numpydata) 
+        '''transformada = rfft(numpydata) 
          
         # Concatenación de la mitad de la Transformada de Fourier con su reflexión simétrica
         full_spectrum = np.concatenate((transformada, np.flip(transformada)))
@@ -115,14 +116,22 @@ def startRecording():
 
         
         #se agrega el nuevo calculo a los frames antes calculados
-        fourier_frames.append(np.real(shifted_spectrum))
+        fourier_frames.append(np.real(shifted_spectrum))'''
         
+         # Calcular transformada de Fourier
+        fft_data = np.fft.fft(numpydata)
+        freqs = np.fft.fftfreq(len(numpydata), d=1/RATE)
         
-       
+        fourier_frames.append(fft_data)  #datos  de la transformada
+        vec_fourier_frames.append(freqs)  #datos de frecuencia de la transformada
+        
+        print("freq->",np.hstack(fft_data).shape)
+        print("data-> ",np.hstack((np.abs(freqs)).shape))
+      
         
         if(i>=int(RATE / CHUNK * RECORD_SECONDS)):
             updatetimecanvas(np.hstack(frames))
-            updatefouriercanvas(np.hstack(fourier_frames))
+            updatefouriercanvas(fft_data,freqs)
             
             i=0
 
@@ -192,7 +201,7 @@ def updatetimecanvas(timeframe):
     canvas.draw_idle()
 
 
-def updatefouriercanvas(freqframe):
+'''def updatefouriercanvas(freqframe):
     fig2.clear()
     
     ax = fig2.add_subplot(111)
@@ -201,6 +210,18 @@ def updatefouriercanvas(freqframe):
      
     ax.set_xlabel('Magnitud')
     ax.set_ylabel('Frecuencia')
+    #ax.set_xlim(-3000, 3000)
+    canvas2.draw_idle()'''
+    
+def updatefouriercanvas(fft_data,freqs):
+    fig2.clear()
+    
+    ax = fig2.add_subplot(111)
+    ax.hist(freqs, bins=100, weights=np.abs(fft_data))
+    
+     
+    ax.set_xlabel('Frecuencia (Hz)')
+    ax.set_ylabel('Conteo') #cantidad de veces que aparece cada frecuencia en el espectro de Fourier
     #ax.set_xlim(-3000, 3000)
     canvas2.draw_idle()
     
@@ -246,24 +267,4 @@ window.geometry("700x1200")
 window.mainloop()
 
 
-# ----Transformada de Fourier-----
-N = 600  # Número de puntos de muestra
-T = 1.0 / 800.0  # Espaciado de muestra
-
-def fourier():
-    global fourier_frames
-    fourier_frames = []
-    global vec_fourier_frames
-    vec_fourier_frames = []= []
-    i=0
-    print("* TRANSFORMA")
-    while (len(frames)>i):
-        array = frames[i]  #se toma un chunck
-        transformada = fft(array)  #transformada de fourier
-        vec_frec = xf = fftfreq(N, T)[:N//2]  #vector de frecuencia correspondiente a los coeficientes de la trasndormada de fourier
-        vec_fourier_frames.append(vec_frec) 
-        fourier_frames.append(transformada)
-        updatefreqcanvas(transformada,vec_frec)
-        
-        i+=1
-        
+ 
