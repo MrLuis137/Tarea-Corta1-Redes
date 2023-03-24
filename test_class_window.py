@@ -34,7 +34,7 @@ RECORD_SECONDS = 2
 WAVE_OUTPUT_FILENAME = "output.wav"
 PLAY_RANGE = 5
 
-p = pyaudio.PyAudio()
+
 frames = []
 recording = False
 wavFile= []
@@ -300,6 +300,7 @@ class Analizador(tk.Frame):
         
     def startRecording(self):
         global recording
+        p = pyaudio.PyAudio()
         # abre el stream de pyAudio
         # Channels abre para surround o mono, este proyecto se hace con mono
         # Rate da el samplerate del canal
