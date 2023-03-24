@@ -263,11 +263,12 @@ class Analizador(tk.Frame):
             fourier_frames.append(fft_data)  #datos  de la transformada
             vec_fourier_frames.append(freqs)  #datos de frecuencia de la transformada
 
+            
             #calcula si han pasado RECORD_SECONDS segundos antes de graficar de nuevo
             #formula recuperada de https://stackoverflow.com/questions/35344649/reading-input-sound-signal-using-python
             if (i >= int(RATE / CHUNK * RECORD_SECONDS)):
                 self.updatetimecanvas(np.hstack(frames)) #llama a actualizar el canvas
-                self.updatefouriercanvas(fft_data,freqs)
+                self.updatefouriercanvas(fourier_frames[:, 0],vec_fourier_frames)
 
                 i = 0
 
@@ -392,7 +393,8 @@ class Analizador(tk.Frame):
         
         self.ax.set_xlabel('Frecuencia (Hz)')
         self.ax.set_ylabel('Conteo') #cantidad de veces que aparece cada frecuencia en el espectro de Fourier
-        #ax.set_xlim(-3000, 3000)
+        self.ax.set_xlim(-30000, 30000) # establecer los límites de la dimensión x
+        self.ax.set_ylim(0, 100000) # establecer los límites de la dimensión y
         self.canvas2.draw_idle()
     
     
@@ -427,13 +429,13 @@ class AudioPlayer:
         
         self.ax.set_xlabel('Frecuencia (Hz)')
         self.ax.set_ylabel('Conteo') #cantidad de veces que aparece cada frecuencia en el espectro de Fourier
-        #ax.set_xlim(-3000, 3000)
+        self.ax.set_xlim(-30000, 30000) # establecer los límites de la dimensión x
+        self.ax.set_ylim(0, 100000) # establecer los límites de la dimensión y
         self.canvas2.draw_idle()
     
     
     def check_realtime(self, multiplier):
         global frames
-<<<<<<< HEAD
         global fourier_frames
         global vec_fourier_frames
         
@@ -449,14 +451,12 @@ class AudioPlayer:
         print("fourier-> ", fourier_frames.shape)
         print("vec-> ", vec_fourier_frames.shape)
         
-=======
         #se busca que no grafique más allá del total de frames
         # si el próximo rango de graficación excede el largo del frame, utiliza el largo del frame como límite superior
         # Para encontrar una medición exacta de los 5 segundos a lo largo de frames, se calculó que hay 43 frames por segundo
         # Estos 43 se multiplica por un PLAY_RANGE que sería de 5 para 5 segundos
         # Para encontrar el punto actual se multiplica por el multiplicador actual para buscar el frame 10, 15, etc
         # Para el límite superior, se le suma 1 al multiplicador para que de el siguiente punto
->>>>>>> master
         if (43 * (multiplier + 1) * PLAY_RANGE <= len(frames)):
             self.updatetimecanvas(np.hstack(frames[43*multiplier*PLAY_RANGE:43 * (multiplier + 1) * PLAY_RANGE]))
             self.updatefouriercanvas(fourier_frames[43*multiplier*PLAY_RANGE:43 * (multiplier + 1) * PLAY_RANGE],vec_fourier_frames[43*multiplier*PLAY_RANGE:43 * (multiplier + 1) * PLAY_RANGE])
