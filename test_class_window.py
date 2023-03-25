@@ -251,14 +251,13 @@ class Analizador(tk.Frame):
         #Abre un ciclo para cada elemento en data
         while data:  
             stream.write(data)  
-            data = f.readframes(chunk)
+
 
             numpydata = np.frombuffer(data, dtype=np.int16)
             frames.append(numpydata)
-
             # Calcular transformada de Fourier
             fft_data = np.fft.fft(numpydata)
-            freqs = np.fft.fftfreq(len(numpydata), d=1/RATE)
+            freqs = np.fft.fftfreq(len(numpydata), d=1/f.getframerate())
             
             fourier_frames.append(fft_data)  #datos  de la transformada
             vec_fourier_frames.append(freqs)  #datos de frecuencia de la transformada
@@ -266,17 +265,20 @@ class Analizador(tk.Frame):
             
             #calcula si han pasado RECORD_SECONDS segundos antes de graficar de nuevo
             #formula recuperada de https://stackoverflow.com/questions/35344649/reading-input-sound-signal-using-python
-            if (i >= int(RATE / CHUNK * RECORD_SECONDS)):
+
+            if (i >= int(f.getframerate() / chunk * 1)):
                 self.updatetimecanvas(np.hstack(frames)) #llama a actualizar el canvas
-                self.updatefouriercanvas(fourier_frames[:, 0],vec_fourier_frames)
+
+                self.updatefouriercanvas(fft_data,freqs)
 
                 i = 0
 
             i += 1
+            data = f.readframes(chunk)
+
 
         numpyarrayfinal = np.hstack(frames)
         self.updatetimecanvas(numpyarrayfinal)
-
         #cierra el stream de datos
         stream.stop_stream()  
         stream.close()  
@@ -286,12 +288,13 @@ class Analizador(tk.Frame):
 
         #guarda un wav como output.wav
         wf = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
-        wf.setnchannels(CHANNELS)
-        wf.setsampwidth(p.get_sample_size(FORMAT))
-        wf.setframerate(RATE)
+        wf.setnchannels(f.getnchannels())
+        wf.setsampwidth(p.get_sample_size(p.get_format_from_width(f.getsampwidth())))
+        wf.setframerate(f.getframerate())
         wf.writeframes(b''.join(frames))
         wf.close()
-        to_atm(frames, ( WAVE_OUTPUT_FILENAME if external_wav_path == "" else external_wav_path))
+        ##print(frames)
+        #to_atm(frames, ( WAVE_OUTPUT_FILENAME if external_wav_path == "" else external_wav_path))
 
 
     def recordingAudio(self):
