@@ -30,7 +30,7 @@ CHUNK = 1024
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 44100
-RECORD_SECONDS = 2
+RECORD_SECONDS = 1
 WAVE_OUTPUT_FILENAME = "output.wav"
 PLAY_RANGE = 5
 
@@ -266,7 +266,7 @@ class Analizador(tk.Frame):
             #calcula si han pasado RECORD_SECONDS segundos antes de graficar de nuevo
             #formula recuperada de https://stackoverflow.com/questions/35344649/reading-input-sound-signal-using-python
 
-            if (i >= int(f.getframerate() / chunk * 1)):
+            if (i >= int(f.getframerate() / chunk * RECORD_SECONDS)):
                 self.updatetimecanvas(np.hstack(frames)) #llama a actualizar el canvas
 
                 self.updatefouriercanvas(fft_data,freqs)
