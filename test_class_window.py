@@ -397,8 +397,8 @@ class Analizador(tk.Frame):
         
         self.ax.set_xlabel('Frecuencia (Hz)')
         self.ax.set_ylabel('Conteo') #cantidad de veces que aparece cada frecuencia en el espectro de Fourier
-        self.ax.set_xlim(-30000, 30000) # establecer los límites de la dimensión x
-        self.ax.set_ylim(0, 100000) # establecer los límites de la dimensión y
+        self.ax.set_xlim(-8000, 8000) # establecer los límites de la dimensión x
+        self.ax.set_ylim(0, 50000) # establecer los límites de la dimensión y
         self.canvas2.draw_idle()
     
     
@@ -433,7 +433,7 @@ class AudioPlayer:
         
         self.ax.set_xlabel('Frecuencia (Hz)')
         self.ax.set_ylabel('Conteo') #cantidad de veces que aparece cada frecuencia en el espectro de Fourier
-        self.ax.set_xlim(-30000, 30000) # establecer los límites de la dimensión x
+        self.ax.set_xlim(-8000, 8000) # establecer los límites de la dimensión x
         self.ax.set_ylim(0, 100000) # establecer los límites de la dimensión y
         self.canvas2.draw_idle()
     
