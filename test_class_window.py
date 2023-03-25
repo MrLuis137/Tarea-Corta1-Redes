@@ -293,8 +293,7 @@ class Analizador(tk.Frame):
         wf.setframerate(f.getframerate())
         wf.writeframes(b''.join(frames))
         wf.close()
-        ##print(frames)
-        #to_atm(frames, ( WAVE_OUTPUT_FILENAME if external_wav_path == "" else external_wav_path))
+        to_atm(frames[:len(frames)-1], ( WAVE_OUTPUT_FILENAME if external_wav_path == "" else external_wav_path))
 
 
     def recordingAudio(self):
